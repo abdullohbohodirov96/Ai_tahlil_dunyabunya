@@ -349,11 +349,34 @@ export default function AdminPage() {
               onSave={saveSetting}
             />
             <SettingField
-              label="Range (masalan Leads!A2:F)"
+              label="Range (masalan A1:F yoki Leads!A2:F)"
               dbKey="google_sheet_range"
               currentInfo={settings.google_sheet_range}
               onSave={saveSetting}
             />
+            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
+              <SettingField
+                label="Ism ustuni (masalan C)"
+                dbKey="google_sheet_col_name"
+                currentInfo={settings.google_sheet_col_name}
+                onSave={saveSetting}
+              />
+              <SettingField
+                label="Telefon ustuni (masalan E)"
+                dbKey="google_sheet_col_phone"
+                currentInfo={settings.google_sheet_col_phone}
+                onSave={saveSetting}
+              />
+              <SettingField
+                label="Manba ustuni (masalan A)"
+                dbKey="google_sheet_col_source"
+                currentInfo={settings.google_sheet_col_source}
+                onSave={saveSetting}
+              />
+            </div>
+            <p className="text-xs text-textMuted">
+              Ustunlarni ko'rsatmasangiz, standart tartib ishlatiladi: B=Ism, C=Telefon, D=Manba.
+            </p>
           </div>
 
           <div className="bg-panel border border-border rounded-xl p-5 space-y-4">
