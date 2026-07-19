@@ -1,201 +1,56 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { RefreshCw, ChevronDown, Phone, PhoneOff, PhoneMissed, CircleDot } from "lucide-react";
+import { useEffect, useMemo, useState, Fragment } from "react";
+import { RefreshCw, ChevronDown, Search, LayoutGrid, List, Download, AlertCircle } from "lucide-react";
 import { useUser } from "../layout.jsx";
 import StatCard from "../../../components/StatCard.jsx";
 import AccessDenied from "../../../components/AccessDenied.jsx";
+import LeadDetail, { contactOptions, qualityOptions } from "../../../components/LeadDetail.jsx";
 import { useLanguage } from "../../../lib/i18n.js";
 import { usePermissions } from "../../../lib/permissions.js";
 import { api } from "../../../lib/apiClient.js";
 
-const contactOptions = [
-  { id: "ha", label: "Ha", icon: Phone, color: "text-mint" },
-  { id: "yoq", label: "Yo'q", icon: PhoneOff, color: "text-coral" },
-  { id: "kotarmadi", label: "Ko'tarmadi", icon: PhoneMissed, color: "text-accent" },
-  { id: "ochiq", label: "Ochiq tel", icon: CircleDot, color: "text-textMuted" },
+function stageOf(lead) {
+  if (lead.sold) return "sold";
+  if (lead.contact_status === "yoq" || lead.contact_status === "kotarmadi") return "lost";
+  if (lead.contact_status === "ha" || lead.contact_status === "ochiq") return "progress";
+  return "new";
+}
+
+const stages = [
+  { id: "new", label: "Yangi", color: "border-textMuted/40" },
+  { id: "progress", label: "Jarayonda", color: "border-accent/50" },
+  { id: "lost", label: "Yo'qotilgan", color: "border-coral/50" },
+  { id: "sold", label: "Sotildi", color: "border-mint/50" },
 ];
 
-const qualityOptions = [
-  { id: "issiq", label: "Issiq" },
-  { id: "iliq", label: "Iliq" },
-  { id: "sovuq", label: "Sovuq" },
-];
+function isOverdue(lead) {
+  if (!lead.follow_up_date || lead.sold) return false;
+  const today = new Date().toISOString().slice(0, 10);
+  return lead.follow_up_date.slice(0, 10) <= today;
+}
 
-function LeadRow({ lead, onSave }) {
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
-    contact_status: lead.contact_status || "",
-    quality: lead.quality || "",
-    follow_up_date: lead.follow_up_date ? lead.follow_up_date.slice(0, 10) : "",
-    note: lead.note || "",
-    sold: lead.sold || false,
-    sale_amount: lead.sale_amount || "",
-  });
-  const [saving, setSaving] = useState(false);
-
-  async function handleSave() {
-    setSaving(true);
-    try {
-      await onSave(lead.id, {
-        ...form,
-        sale_amount: form.sale_amount ? Number(form.sale_amount) : null,
-        follow_up_date: form.follow_up_date || null,
-      });
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  const ContactIcon = contactOptions.find((c) => c.id === lead.contact_status)?.icon;
-
-  return (
-    <>
-      <tr
-        onClick={() => setOpen((o) => !o)}
-        className="border-t border-border/60 cursor-pointer hover:bg-panelAlt/40 transition-colors"
-      >
-        <td className="px-4 py-3">{lead.full_name}</td>
-        <td className="px-4 py-3 font-mono mono-num">{lead.phone}</td>
-        <td className="px-4 py-3 text-textMuted">{lead.source}</td>
-        <td className="px-4 py-3">
-          {ContactIcon ? (
-            <span className={`flex items-center gap-1 text-xs ${contactOptions.find((c) => c.id === lead.contact_status)?.color}`}>
-              <ContactIcon size={13} />
-              {contactOptions.find((c) => c.id === lead.contact_status)?.label}
-            </span>
-          ) : (
-            <span className="text-xs text-textMuted">Belgilanmagan</span>
-          )}
-        </td>
-        <td className="px-4 py-3">
-          {lead.sold ? (
-            <span className="text-xs text-mint">Sotildi{lead.sale_amount ? ` · $${Number(lead.sale_amount).toLocaleString("en-US")}` : ""}</span>
-          ) : (
-            <span className="text-xs text-textMuted">—</span>
-          )}
-        </td>
-        <td className="px-4 py-3 text-right">
-          <ChevronDown size={16} className={`text-textMuted transition-transform inline-block ${open ? "rotate-180" : ""}`} />
-        </td>
-      </tr>
-      {open && (
-        <tr className="bg-panelAlt/30 border-t border-border/60">
-          <td colSpan={6} className="px-4 py-5">
-            <div className="grid md:grid-cols-2 gap-5">
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-textMuted uppercase tracking-wide">Bog'lanildimi?</label>
-                  <div className="flex gap-2 mt-1.5 flex-wrap">
-                    {contactOptions.map((c) => {
-                      const Icon = c.icon;
-                      const active = form.contact_status === c.id;
-                      return (
-                        <button
-                          key={c.id}
-                          onClick={() => setForm((f) => ({ ...f, contact_status: c.id }))}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border transition-colors ${
-                            active ? "bg-accent/15 border-accent/40 text-accent" : "border-border text-textMuted hover:text-textPrimary"
-                          }`}
-                        >
-                          <Icon size={13} />
-                          {c.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs text-textMuted uppercase tracking-wide">Lead sifati</label>
-                  <div className="flex gap-2 mt-1.5">
-                    {qualityOptions.map((q) => (
-                      <button
-                        key={q.id}
-                        onClick={() => setForm((f) => ({ ...f, quality: q.id }))}
-                        className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
-                          form.quality === q.id ? "bg-accent/15 border-accent/40 text-accent" : "border-border text-textMuted hover:text-textPrimary"
-                        }`}
-                      >
-                        {q.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-xs text-textMuted uppercase tracking-wide">Qayta aloqa sanasi</label>
-                  <input
-                    type="date"
-                    value={form.follow_up_date}
-                    onChange={(e) => setForm((f) => ({ ...f, follow_up_date: e.target.value }))}
-                    className="mt-1.5 w-full bg-panel border border-border rounded px-2 py-1.5 text-sm"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-textMuted uppercase tracking-wide">Izoh</label>
-                  <textarea
-                    rows={3}
-                    value={form.note}
-                    onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-                    placeholder="mijoz haqida izoh..."
-                    className="mt-1.5 w-full bg-panel border border-border rounded px-2 py-1.5 text-sm resize-none"
-                  />
-                </div>
-
-                <div className="flex items-end gap-3">
-                  <div>
-                    <label className="text-xs text-textMuted uppercase tracking-wide">Sotildimi?</label>
-                    <div className="flex gap-2 mt-1.5">
-                      <button
-                        onClick={() => setForm((f) => ({ ...f, sold: true }))}
-                        className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
-                          form.sold ? "bg-mint/15 border-mint/40 text-mint" : "border-border text-textMuted"
-                        }`}
-                      >
-                        Ha
-                      </button>
-                      <button
-                        onClick={() => setForm((f) => ({ ...f, sold: false }))}
-                        className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
-                          !form.sold ? "bg-coral/15 border-coral/40 text-coral" : "border-border text-textMuted"
-                        }`}
-                      >
-                        Yo'q
-                      </button>
-                    </div>
-                  </div>
-                  {form.sold && (
-                    <div className="flex-1">
-                      <label className="text-xs text-textMuted uppercase tracking-wide">Summa ($)</label>
-                      <input
-                        type="number"
-                        value={form.sale_amount}
-                        onChange={(e) => setForm((f) => ({ ...f, sale_amount: e.target.value }))}
-                        placeholder="0"
-                        className="mt-1.5 w-full bg-panel border border-border rounded px-2 py-1.5 text-sm"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="w-full bg-accent text-base font-medium rounded-lg py-2 text-sm hover:bg-accentDim transition-colors disabled:opacity-50"
-                >
-                  {saving ? "Saqlanmoqda..." : "Saqlash"}
-                </button>
-              </div>
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
-  );
+function exportCsv(leads) {
+  const header = ["Ism", "Telefon", "Manba", "Bog'lanish", "Sifat", "Qayta aloqa", "Izoh", "Sotildi", "Summa"];
+  const rows = leads.map((l) => [
+    l.full_name,
+    l.phone,
+    l.source,
+    l.contact_status || "",
+    l.quality || "",
+    l.follow_up_date ? l.follow_up_date.slice(0, 10) : "",
+    (l.note || "").replace(/\n/g, " ").replace(/,/g, ";"),
+    l.sold ? "Ha" : "Yo'q",
+    l.sale_amount || "",
+  ]);
+  const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `leadlar-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 export default function SalesPage() {
@@ -208,6 +63,11 @@ export default function SalesPage() {
   const [stats, setStats] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [msg, setMsg] = useState("");
+  const [view, setView] = useState("table");
+  const [search, setSearch] = useState("");
+  const [qualityFilter, setQualityFilter] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+  const [modalLead, setModalLead] = useState(null);
 
   async function load() {
     const l = await api.leads().catch(() => []);
@@ -241,28 +101,57 @@ export default function SalesPage() {
     load();
   }
 
+  const filteredLeads = useMemo(() => {
+    return leads.filter((l) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!(l.full_name?.toLowerCase().includes(q) || l.phone?.includes(q))) return false;
+      }
+      if (qualityFilter && l.quality !== qualityFilter) return false;
+      return true;
+    });
+  }, [leads, search, qualityFilter]);
+
+  const overdueCount = leads.filter(isOverdue).length;
+
   if (!hasAccess) return <AccessDenied />;
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="font-display text-2xl font-semibold">{t("sales_title")}</h1>
           <p className="text-textMuted text-sm mt-1">{t("sales_subtitle")}</p>
         </div>
-        {canSync && (
+        <div className="flex gap-2">
           <button
-            onClick={handleSync}
-            disabled={syncing}
-            className="bg-accent text-base font-medium rounded-lg px-4 py-2 text-sm hover:bg-accentDim disabled:opacity-50 transition-colors flex items-center gap-2"
+            onClick={() => exportCsv(filteredLeads)}
+            className="bg-panel border border-border rounded-lg px-3 py-2 text-xs font-medium hover:bg-panelAlt transition-colors flex items-center gap-1.5"
           >
-            <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
-            {syncing ? t("syncing") : t("sync_sheet")}
+            <Download size={13} />
+            CSV
           </button>
-        )}
+          {canSync && (
+            <button
+              onClick={handleSync}
+              disabled={syncing}
+              className="bg-accent text-base font-medium rounded-lg px-4 py-2 text-sm hover:bg-accentDim disabled:opacity-50 transition-colors flex items-center gap-2"
+            >
+              <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
+              {syncing ? t("syncing") : t("sync_sheet")}
+            </button>
+          )}
+        </div>
       </div>
 
       {msg && <p className={`text-sm ${msg.includes("xatosi") ? "text-coral" : "text-mint"}`}>{msg}</p>}
+
+      {overdueCount > 0 && (
+        <div className="bg-coral/10 border border-coral/30 rounded-lg px-4 py-2.5 flex items-center gap-2 text-sm text-coral">
+          <AlertCircle size={15} />
+          {overdueCount} ta lead bilan bugun yoki undan oldin qayta aloqa qilish belgilangan edi.
+        </div>
+      )}
 
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -277,32 +166,166 @@ export default function SalesPage() {
         </div>
       )}
 
-      <div className="bg-panel border border-border rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-panelAlt text-textMuted text-xs uppercase">
-            <tr>
-              <th className="text-left px-4 py-3">Ism</th>
-              <th className="text-left px-4 py-3">Telefon</th>
-              <th className="text-left px-4 py-3">Manba</th>
-              <th className="text-left px-4 py-3">Bog'lanish</th>
-              <th className="text-left px-4 py-3">Natija</th>
-              <th className="px-4 py-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {leads.map((lead) => (
-              <LeadRow key={lead.id} lead={lead} onSave={updateLead} />
-            ))}
-            {!leads.length && (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-textMuted">
-                  Hozircha lead yo'q. "Sheetdan yangilash" tugmasini bosing.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-xs">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-textMuted" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Ism yoki telefon bo'yicha qidirish..."
+            className="w-full bg-panel border border-border rounded-lg pl-8 pr-3 py-2 text-sm"
+          />
+        </div>
+        <select
+          value={qualityFilter}
+          onChange={(e) => setQualityFilter(e.target.value)}
+          className="bg-panel border border-border rounded-lg px-3 py-2 text-sm"
+        >
+          <option value="">Barcha sifatlar</option>
+          {qualityOptions.map((q) => (
+            <option key={q.id} value={q.id}>{q.label}</option>
+          ))}
+        </select>
+        <div className="flex gap-1 bg-panel border border-border rounded-lg p-1 ml-auto">
+          <button
+            onClick={() => setView("table")}
+            className={`p-1.5 rounded transition-colors ${view === "table" ? "bg-accent/15 text-accent" : "text-textMuted"}`}
+          >
+            <List size={15} />
+          </button>
+          <button
+            onClick={() => setView("kanban")}
+            className={`p-1.5 rounded transition-colors ${view === "kanban" ? "bg-accent/15 text-accent" : "text-textMuted"}`}
+          >
+            <LayoutGrid size={15} />
+          </button>
+        </div>
       </div>
+
+      {view === "table" ? (
+        <div className="bg-panel border border-border rounded-xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-panelAlt text-textMuted text-xs uppercase">
+              <tr>
+                <th className="text-left px-4 py-3">Ism</th>
+                <th className="text-left px-4 py-3">Telefon</th>
+                <th className="text-left px-4 py-3">Manba</th>
+                <th className="text-left px-4 py-3">Bog'lanish</th>
+                <th className="text-left px-4 py-3">Natija</th>
+                <th className="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredLeads.map((lead) => {
+                const ContactIcon = contactOptions.find((c) => c.id === lead.contact_status)?.icon;
+                const isOpen = expandedId === lead.id;
+                return (
+                  <Fragment key={lead.id}>
+                    <tr
+                      onClick={() => setExpandedId(isOpen ? null : lead.id)}
+                      className={`border-t border-border/60 cursor-pointer hover:bg-panelAlt/40 transition-colors ${
+                        isOverdue(lead) ? "bg-coral/5" : ""
+                      }`}
+                    >
+                      <td className="px-4 py-3">{lead.full_name}</td>
+                      <td className="px-4 py-3 font-mono mono-num">{lead.phone}</td>
+                      <td className="px-4 py-3 text-textMuted">{lead.source}</td>
+                      <td className="px-4 py-3">
+                        {ContactIcon ? (
+                          <span className={`flex items-center gap-1 text-xs ${contactOptions.find((c) => c.id === lead.contact_status)?.color}`}>
+                            <ContactIcon size={13} />
+                            {contactOptions.find((c) => c.id === lead.contact_status)?.label}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-textMuted">Belgilanmagan</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {lead.sold ? (
+                          <span className="text-xs text-mint">
+                            Sotildi{lead.sale_amount ? ` · $${Number(lead.sale_amount).toLocaleString("en-US")}` : ""}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-textMuted">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <ChevronDown size={16} className={`text-textMuted transition-transform inline-block ${isOpen ? "rotate-180" : ""}`} />
+                      </td>
+                    </tr>
+                    {isOpen && (
+                      <tr className="bg-panelAlt/30 border-t border-border/60">
+                        <td colSpan={6} className="px-4 py-5">
+                          <LeadDetail lead={lead} onSave={updateLead} />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+              {!filteredLeads.length && (
+                <tr>
+                  <td colSpan={6} className="px-4 py-8 text-center text-textMuted">
+                    Hech narsa topilmadi.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {stages.map((stage) => (
+            <div key={stage.id} className="space-y-3">
+              <p className="text-xs uppercase tracking-wide text-textMuted font-medium">{stage.label}</p>
+              <div className="space-y-2">
+                {filteredLeads
+                  .filter((l) => stageOf(l) === stage.id)
+                  .map((lead) => (
+                    <button
+                      key={lead.id}
+                      onClick={() => setModalLead(lead)}
+                      className={`w-full text-left bg-panel border-l-2 ${stage.color} border-t border-r border-b border-border rounded-lg p-3 hover:bg-panelAlt/40 transition-colors ${
+                        isOverdue(lead) ? "ring-1 ring-coral/40" : ""
+                      }`}
+                    >
+                      <p className="text-sm font-medium">{lead.full_name}</p>
+                      <p className="text-xs text-textMuted font-mono mono-num">{lead.phone}</p>
+                      {lead.quality && (
+                        <span className="inline-block mt-1.5 text-xs text-accent bg-accent/10 rounded px-1.5 py-0.5">
+                          {qualityOptions.find((q) => q.id === lead.quality)?.label}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                {!filteredLeads.filter((l) => stageOf(l) === stage.id).length && (
+                  <p className="text-xs text-textMuted italic">Bo'sh</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {modalLead && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-panel border border-border rounded-2xl p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-display font-medium">{modalLead.full_name}</h3>
+                <p className="text-xs text-textMuted font-mono mono-num">{modalLead.phone} · {modalLead.source}</p>
+              </div>
+              <button onClick={() => setModalLead(null)} className="text-textMuted hover:text-textPrimary">✕</button>
+            </div>
+            <LeadDetail
+              lead={modalLead}
+              onSave={async (id, patch) => {
+                await updateLead(id, patch);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

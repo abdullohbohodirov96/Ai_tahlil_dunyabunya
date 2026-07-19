@@ -118,6 +118,16 @@ ALTER TABLE leads ADD COLUMN IF NOT EXISTS quality TEXT;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS follow_up_date DATE;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS sold BOOLEAN DEFAULT false;
 ALTER TABLE leads ADD COLUMN IF NOT EXISTS sale_amount NUMERIC;
+
+-- Har bir lead bo'yicha tarix (izohlar, holat o'zgarishlari) — CRM'ning "activity log"i
+CREATE TABLE IF NOT EXISTS lead_activities (
+  id SERIAL PRIMARY KEY,
+  lead_id INTEGER REFERENCES leads(id) ON DELETE CASCADE,
+  user_id INTEGER REFERENCES users(id),
+  type TEXT NOT NULL DEFAULT 'note',
+  text TEXT,
+  created_at TIMESTAMP DEFAULT now()
+);
 `;
 
 async function main() {

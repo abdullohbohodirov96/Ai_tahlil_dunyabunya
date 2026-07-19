@@ -20,20 +20,15 @@ async function bumpSale(managerId) {
   }
 }
 
+const contactLabels = { ha: "Bog'landi", yoq: "Bog'lanmadi", kotarmadi: "Ko'tarmadi", ochiq: "Telefon ochiq" };
+const qualityLabels = { issiq: "Issiq", iliq: "Iliq", sovuq: "Sovuq" };
+
 export async function PATCH(req, { params }) {
   const { user, error } = requireAuth(req, "sales_manager", "admin");
   if (error) return error;
 
   const body = await req.json();
-  const {
-    status,
-    note,
-    contact_status,
-    quality,
-    follow_up_date,
-    sold,
-    sale_amount,
-  } = body;
+  const { status, note, contact_status, quality, follow_up_date, sold, sale_amount } = body;
 
   const leadRes = await query("SELECT * FROM leads WHERE id = $1", [params.id]);
   const lead = leadRes.rows[0];
@@ -42,7 +37,6 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: "Bu lead sizga tegishli emas" }, { status: 403 });
   }
 
-  // Agar "sotildi" belgilansa, umumiy status ham "sifatli" bo'ladi (statistikaga tushishi uchun)
   const resolvedStatus = sold === true ? "sifatli" : status;
 
   await query(
@@ -67,6 +61,30 @@ export async function PATCH(req, { params }) {
       params.id,
     ]
   );
+
+  // O'zgarishlarni tarixga (activity log) yozib boramiz
+  const changes = [];
+  if (contact_status && contact_status !== lead.contact_status) {
+    changes.push(`Bog'lanish holati: ${contactLabels[contact_status] || contact_status}`);
+  }
+  if (quality && quality !== lead.quality) {
+    changes.push(`Lead sifati: ${qualityLabels[quality] || quality}`);
+  }
+  if (follow_up_date) {
+    changes.push(`Qayta aloqa sanasi: ${follow_up_date}`);
+  }
+  if (sold === true && !lead.sold) {
+    changes.push(`✅ Sotildi${sale_amount ? ` — $${sale_amount}` : ""}`);
+  }
+  if (note && note !== lead.note) {
+    changes.push(`Izoh: ${note}`);
+  }
+  if (changes.length) {
+    await query(
+      "INSERT INTO lead_activities (lead_id, user_id, type, text) VALUES ($1, $2, 'update', $3)",
+      [params.id, user.id, changes.join(" · ")]
+    );
+  }
 
   const wasAlreadySold = lead.sold;
   if (sold === true && !wasAlreadySold) {
