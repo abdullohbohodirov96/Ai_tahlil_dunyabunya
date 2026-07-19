@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { handleUpdate } from "../../../../lib/telegram.js";
 
+export const dynamic = "force-dynamic";
+
 // Telegram bu manzilga har bir yangi xabar/hodisani yuboradi (webhook rejimi).
 // Deploy qilingandan keyin bir marta sozlash kerak — README-VERCEL.md ga qarang.
 export async function POST(req) {

@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import { query } from "../../../../lib/db.js";
 import { signToken } from "../../../../lib/auth.js";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req) {
   const { username, password } = await req.json();
   const res = await query("SELECT * FROM users WHERE username = $1", [username]);

@@ -3,6 +3,8 @@ import { query } from "../../../../lib/db.js";
 import { requireAuth } from "../../../../lib/auth.js";
 import { fetchLeadsFromSheet } from "../../../../lib/sheetsService.js";
 
+export const dynamic = "force-dynamic";
+
 function today() {
   return new Date().toISOString().slice(0, 10);
 }

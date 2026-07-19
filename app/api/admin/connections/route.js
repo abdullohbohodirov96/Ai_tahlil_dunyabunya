@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/auth.js";
 import { getSetting } from "../../../../lib/settings.js";
 
+export const dynamic = "force-dynamic";
+
 async function checkTelegram() {
   const token = await getSetting("telegram_bot_token", "TELEGRAM_BOT_TOKEN");
   if (!token) return { connected: false, detail: "Bot tokeni sozlanmagan" };

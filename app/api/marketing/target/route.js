@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/auth.js";
 import { getSetting } from "../../../../lib/settings.js";
 
+export const dynamic = "force-dynamic";
+
 const PRESETS = {
   today: "today",
   "7d": "last_7d",

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/auth.js";
 import { getAssistantReply } from "../../../../lib/assistant.js";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req) {
   const { error } = requireAuth(req);
   if (error) return error;

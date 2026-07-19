@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../../lib/auth.js";
 import { createLinkToken, getBotUsername, hasTelegramToken } from "../../../../../lib/telegram.js";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req) {
   const { user, error } = requireAuth(req);
   if (error) return error;

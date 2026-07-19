@@ -3,6 +3,8 @@ import { query } from "../../../../lib/db.js";
 import { requireAuth } from "../../../../lib/auth.js";
 import { tgSend } from "../../../../lib/telegram.js";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req) {
   const { error } = requireAuth(req, "admin", "marketing_head");
   if (error) return error;

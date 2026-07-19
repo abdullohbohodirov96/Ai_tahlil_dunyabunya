@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { query } from "../../../../../lib/db.js";
 import { requireAuth } from "../../../../../lib/auth.js";
 
+export const dynamic = "force-dynamic";
+
 async function bumpSale(managerId) {
   const day = new Date().toISOString().slice(0, 10);
   const existing = await query(

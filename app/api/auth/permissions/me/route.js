@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { query } from "../../../../../lib/db.js";
 import { requireAuth } from "../../../../../lib/auth.js";
 
+export const dynamic = "force-dynamic";
+
 // Rol asosidagi standart ruxsatlar — admin har doim hammasiga ega.
 // Boshqa rollar uchun, agar account_permissions jadvalida aniq yozuv bo'lmasa,
 // shu standart qiymatlar ishlatiladi (eski foydalanuvchilar buzilib qolmasligi uchun).

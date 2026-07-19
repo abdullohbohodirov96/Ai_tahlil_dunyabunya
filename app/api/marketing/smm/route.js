@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/auth.js";
 import { getSetting } from "../../../../lib/settings.js";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req) {
   const { error } = requireAuth(req);
   if (error) return error;

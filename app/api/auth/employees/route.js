@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import { query } from "../../../../lib/db.js";
 import { requireAuth } from "../../../../lib/auth.js";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req) {
   const { error } = requireAuth(req, "admin");
   if (error) return error;

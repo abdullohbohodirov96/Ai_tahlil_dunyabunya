@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/auth.js";
 import { getSetting, setSetting, SETTINGS_MAP } from "../../../../lib/settings.js";
 
+export const dynamic = "force-dynamic";
+
 // Admin panelda ko'rsatish uchun — qiymatlarni to'liq qaytarmasdan, faqat
 // "sozlangan/sozlanmagan" holatini va oxirgi bir necha belgisini ko'rsatadi.
 export async function GET(req) {
