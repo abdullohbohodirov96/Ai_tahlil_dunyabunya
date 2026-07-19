@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, Fragment } from "react";
-import { RefreshCw, ChevronDown, Search, LayoutGrid, List, Download, AlertCircle } from "lucide-react";
+import { RefreshCw, ChevronDown, Search, LayoutGrid, List, Download, AlertCircle, Plus } from "lucide-react";
 import { useUser } from "../layout.jsx";
 import StatCard from "../../../components/StatCard.jsx";
 import AccessDenied from "../../../components/AccessDenied.jsx";
@@ -68,6 +68,11 @@ export default function SalesPage() {
   const [qualityFilter, setQualityFilter] = useState("");
   const [expandedId, setExpandedId] = useState(null);
   const [modalLead, setModalLead] = useState(null);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addForm, setAddForm] = useState({ full_name: "", phone: "", source: "" });
+  const [managers, setManagers] = useState([]);
+  const [addError, setAddError] = useState("");
+  const [adding, setAdding] = useState(false);
 
   async function load() {
     const l = await api.leads().catch(() => []);
@@ -79,8 +84,27 @@ export default function SalesPage() {
 
   useEffect(() => {
     load();
+    if (user.role === "admin") {
+      api.employees().then((emps) => setManagers(emps.filter((e) => e.role === "sales_manager"))).catch(() => {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function submitAddLead(e) {
+    e.preventDefault();
+    setAddError("");
+    setAdding(true);
+    try {
+      await api.createLead(addForm);
+      setAddForm({ full_name: "", phone: "", source: "" });
+      setAddModalOpen(false);
+      load();
+    } catch (err) {
+      setAddError(err.message);
+    } finally {
+      setAdding(false);
+    }
+  }
 
   async function handleSync() {
     setSyncing(true);
@@ -124,6 +148,13 @@ export default function SalesPage() {
           <p className="text-textMuted text-sm mt-1">{t("sales_subtitle")}</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => setAddModalOpen(true)}
+            className="bg-panel border border-border rounded-lg px-3 py-2 text-xs font-medium hover:bg-panelAlt transition-colors flex items-center gap-1.5"
+          >
+            <Plus size={13} />
+            Lead qo'shish
+          </button>
           <button
             onClick={() => exportCsv(filteredLeads)}
             className="bg-panel border border-border rounded-lg px-3 py-2 text-xs font-medium hover:bg-panelAlt transition-colors flex items-center gap-1.5"
@@ -304,6 +335,58 @@ export default function SalesPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {addModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-panel border border-border rounded-2xl p-6 w-full max-w-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-display font-medium">Yangi lead qo'shish</h3>
+              <button onClick={() => setAddModalOpen(false)} className="text-textMuted hover:text-textPrimary">✕</button>
+            </div>
+            <form onSubmit={submitAddLead} className="space-y-3">
+              <input
+                placeholder="To'liq ism"
+                value={addForm.full_name}
+                onChange={(e) => setAddForm((f) => ({ ...f, full_name: e.target.value }))}
+                className="w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm"
+                required
+              />
+              <input
+                placeholder="Telefon raqami"
+                value={addForm.phone}
+                onChange={(e) => setAddForm((f) => ({ ...f, phone: e.target.value }))}
+                className="w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm"
+                required
+              />
+              <input
+                placeholder="Manba (masalan: Qo'ng'iroq, Do'kon)"
+                value={addForm.source}
+                onChange={(e) => setAddForm((f) => ({ ...f, source: e.target.value }))}
+                className="w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm"
+              />
+              {user.role === "admin" && managers.length > 0 && (
+                <select
+                  value={addForm.manager_id || ""}
+                  onChange={(e) => setAddForm((f) => ({ ...f, manager_id: e.target.value }))}
+                  className="w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm"
+                >
+                  <option value="">Avtomatik menejer tanlansin</option>
+                  {managers.map((m) => (
+                    <option key={m.id} value={m.id}>{m.full_name}</option>
+                  ))}
+                </select>
+              )}
+              {addError && <p className="text-coral text-xs">{addError}</p>}
+              <button
+                disabled={adding}
+                className="w-full bg-accent text-base font-medium rounded-lg py-2 text-sm hover:bg-accentDim transition-colors disabled:opacity-50"
+              >
+                {adding ? "Qo'shilmoqda..." : "Qo'shish"}
+              </button>
+            </form>
+          </div>
         </div>
       )}
 
