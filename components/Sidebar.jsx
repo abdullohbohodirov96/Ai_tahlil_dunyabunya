@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Megaphone, Users, Send, Settings, LogOut, Link2 } from "lucide-react";
+import { LayoutDashboard, Megaphone, Users, Send, Settings, LogOut, Link2, ListTodo } from "lucide-react";
 import { useLanguage } from "../lib/i18n.js";
 import { usePermissions } from "../lib/permissions.js";
 import TelegramLinkModal from "./TelegramLinkModal.jsx";
@@ -25,6 +25,7 @@ export default function Sidebar({ user }) {
     },
     { to: "/dashboard/sales", label: t("nav_sales"), icon: Users, module: ["sales"] },
     { to: "/dashboard/telegram", label: t("nav_telegram"), icon: Send, module: ["telegram"] },
+    { to: "/dashboard/todos", label: "Vazifalar", icon: ListTodo, always: true },
     { to: "/dashboard/admin", label: t("nav_admin"), icon: Settings, adminOnly: true },
   ];
 

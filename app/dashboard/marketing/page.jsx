@@ -19,6 +19,7 @@ const ranges = [
 export default function MarketingPage() {
   const [target, setTarget] = useState(null);
   const [smm, setSmm] = useState(null);
+  const [smmPlatform, setSmmPlatform] = useState("instagram");
   const [range, setRange] = useState("30d");
   const [loadingTarget, setLoadingTarget] = useState(false);
   const { t } = useLanguage();
@@ -30,9 +31,9 @@ export default function MarketingPage() {
   const [tab, setTab] = useState(canTarget ? "target" : "smm");
 
   useEffect(() => {
-    if (canSmm) api.smm().then(setSmm).catch(() => {});
+    if (canSmm) api.smm(smmPlatform, range).then(setSmm).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [smmPlatform, range, canSmm]);
 
   useEffect(() => {
     if (!canTarget) return;
@@ -53,7 +54,7 @@ export default function MarketingPage() {
           <h1 className="font-display text-2xl font-semibold">{t("marketing_title")}</h1>
           <p className="text-textMuted text-sm mt-1">{t("marketing_subtitle")}</p>
         </div>
-        {tab === "target" && (
+        {(tab === "target" || tab === "smm") && (
           <div className="flex items-center gap-1.5 bg-panel border border-border rounded-lg p-1">
             <Calendar size={14} className="text-textMuted ml-2" />
             {ranges.map((r) => (
@@ -175,6 +176,22 @@ export default function MarketingPage() {
 
       {tab === "smm" && (
         <div className="space-y-4">
+          <div className="flex gap-2">
+            {[
+              { id: "instagram", label: "Instagram" },
+              { id: "facebook", label: "Facebook" },
+            ].map((pf) => (
+              <button
+                key={pf.id}
+                onClick={() => setSmmPlatform(pf.id)}
+                className={`px-4 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  smmPlatform === pf.id ? "bg-accent/15 text-accent border-accent/30" : "border-border text-textMuted hover:text-textPrimary"
+                }`}
+              >
+                {pf.label}
+              </button>
+            ))}
+          </div>
           {smm?.error && (
             <p className="text-xs text-coral bg-coral/10 border border-coral/30 rounded-lg px-4 py-2">
               {smm.error}
@@ -210,8 +227,129 @@ export default function MarketingPage() {
               </div>
             ))}
           </div>
+          {isAdmin && <ContentPlanSection />}
         </div>
       )}
+    </div>
+  );
+}
+
+function ContentPlanSection() {
+  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [plans, setPlans] = useState([]);
+  const [form, setForm] = useState({ day: "", stories_count: 0, posts_count: 0, carousels_count: 0, note: "" });
+  const [msg, setMsg] = useState("");
+
+  function load() {
+    api.contentPlan(month).then(setPlans).catch(() => {});
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month]);
+
+  async function submit(e) {
+    e.preventDefault();
+    setMsg("");
+    try {
+      await api.saveContentPlan(form);
+      setForm({ day: "", stories_count: 0, posts_count: 0, carousels_count: 0, note: "" });
+      setMsg("Saqlandi");
+      load();
+    } catch (e2) {
+      setMsg(e2.message);
+    }
+  }
+
+  return (
+    <div className="bg-panel border border-border rounded-xl p-5 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h3 className="font-display font-medium text-sm">Oylik kontent-reja</h3>
+        <input
+          type="month"
+          value={month}
+          onChange={(e) => setMonth(e.target.value)}
+          className="bg-panelAlt border border-border rounded px-2 py-1 text-xs"
+        />
+      </div>
+
+      <form onSubmit={submit} className="grid grid-cols-2 md:grid-cols-6 gap-2 items-end">
+        <div>
+          <label className="text-xs text-textMuted">Sana</label>
+          <input type="date" required value={form.day}
+            onChange={(e) => setForm((f) => ({ ...f, day: e.target.value }))}
+            className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-xs" />
+        </div>
+        <div>
+          <label className="text-xs text-textMuted">Storis</label>
+          <input type="number" min="0" value={form.stories_count}
+            onChange={(e) => setForm((f) => ({ ...f, stories_count: Number(e.target.value) }))}
+            className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-xs" />
+        </div>
+        <div>
+          <label className="text-xs text-textMuted">Post</label>
+          <input type="number" min="0" value={form.posts_count}
+            onChange={(e) => setForm((f) => ({ ...f, posts_count: Number(e.target.value) }))}
+            className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-xs" />
+        </div>
+        <div>
+          <label className="text-xs text-textMuted">Carousel</label>
+          <input type="number" min="0" value={form.carousels_count}
+            onChange={(e) => setForm((f) => ({ ...f, carousels_count: Number(e.target.value) }))}
+            className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-xs" />
+        </div>
+        <div>
+          <label className="text-xs text-textMuted">Izoh</label>
+          <input value={form.note}
+            onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+            className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-xs" />
+        </div>
+        <button className="bg-accent/20 text-accent rounded px-3 py-1.5 text-xs hover:bg-accent/30 transition-colors">
+          Saqlash
+        </button>
+      </form>
+      {msg && <p className={`text-xs ${msg === "Saqlandi" ? "text-mint" : "text-coral"}`}>{msg}</p>}
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead className="text-textMuted uppercase">
+            <tr>
+              <th className="text-left py-2">Sana</th>
+              <th className="text-right py-2">Storis</th>
+              <th className="text-right py-2">Post</th>
+              <th className="text-right py-2">Carousel</th>
+              <th className="text-left py-2 pl-4">Izoh</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {plans.map((pl) => (
+              <tr key={pl.id} className="border-t border-border/60">
+                <td className="py-2">{pl.day?.slice(0, 10)}</td>
+                <td className="py-2 text-right font-mono mono-num">{pl.stories_count}</td>
+                <td className="py-2 text-right font-mono mono-num">{pl.posts_count}</td>
+                <td className="py-2 text-right font-mono mono-num">{pl.carousels_count}</td>
+                <td className="py-2 pl-4 text-textMuted">{pl.note || ""}</td>
+                <td className="py-2 text-right">
+                  <button
+                    onClick={() => api.deleteContentPlan(pl.day?.slice(0, 10)).then(load)}
+                    className="text-textMuted hover:text-coral"
+                  >
+                    x
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {!plans.length && (
+              <tr><td colSpan={6} className="py-4 text-center text-textMuted">Bu oy uchun reja kiritilmagan.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-textMuted">
+        Har kuni ertalab bot shu kunga belgilangan rejani SMM roli bog'langan xodimlarga avtomatik eslatadi.
+      </p>
     </div>
   );
 }

@@ -99,3 +99,13 @@ export async function PATCH(req, { params }) {
 
   return NextResponse.json({ ok: true });
 }
+
+// Leadni butunlay o'chirish (tarixlari CASCADE bilan birga o'chadi)
+export async function DELETE(req, { params }) {
+  const { user, error } = requireAuth(req);
+  if (error) return error;
+  const canEditSales = await hasModuleAccess(user, "sales", "can_edit");
+  if (!canEditSales) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+  await query("DELETE FROM leads WHERE id = $1", [params.id]);
+  return NextResponse.json({ ok: true });
+}

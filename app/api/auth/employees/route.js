@@ -9,7 +9,7 @@ export async function GET(req) {
   const { error } = requireAuth(req, "admin");
   if (error) return error;
   const res = await query(
-    "SELECT id, full_name, username, role, active, created_at FROM users ORDER BY id DESC"
+    "SELECT id, full_name, username, role, active, base_salary, created_at FROM users ORDER BY id DESC"
   );
   return NextResponse.json(res.rows);
 }

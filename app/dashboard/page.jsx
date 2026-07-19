@@ -10,6 +10,8 @@ export default function OverviewPage() {
   const [target, setTarget] = useState(null);
   const [smm, setSmm] = useState(null);
   const [tg, setTg] = useState([]);
+  const [board, setBoard] = useState(null);
+  const [todos, setTodos] = useState([]);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -17,12 +19,16 @@ export default function OverviewPage() {
     api.target().then(setTarget).catch(() => {});
     api.smm().then(setSmm).catch(() => {});
     api.tgUsers().then(setTg).catch(() => setTg([]));
+    api.leaderboard().then(setBoard).catch(() => {});
+    api.todos().then(setTodos).catch(() => {});
   }, []);
 
   const todayLeads = sales?.daily?.[0]?.leads ?? 0;
   const todaySales = sales?.daily?.[0]?.sales ?? 0;
   const spend = target?.campaigns?.reduce((s, c) => s + Number(c.spend || 0), 0) ?? 0;
   const followers = smm?.platforms?.reduce((s, p) => s + Number(p.followers || 0), 0) ?? 0;
+  const totalSalesSum = board?.overall?.total_sales ?? 0;
+  const openTodos = todos.filter((td) => td.status !== "bajarildi").length;
 
   return (
     <div className="space-y-8">
@@ -36,6 +42,8 @@ export default function OverviewPage() {
         <StatCard label={t("stat_today_sales")} value={todaySales} accentColor="text-mint" />
         <StatCard label={t("stat_target_spend")} value={`$${spend.toLocaleString("en-US")}`} />
         <StatCard label={t("stat_smm_audience")} value={followers.toLocaleString("en-US")} />
+        <StatCard label="Jami sotuvlar" value={`${Number(totalSalesSum).toLocaleString("en-US")} so'm`} accentColor="text-mint" />
+        <StatCard label="Ochiq vazifalar" value={openTodos} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -65,6 +73,19 @@ export default function OverviewPage() {
           </p>
         </div>
       </div>
+      {board && board.board?.length > 0 && (
+        <div className="bg-panel border border-border rounded-xl p-5">
+          <p className="text-xs uppercase text-textMuted font-medium mb-3">Top menejerlar (sotuv bo'yicha)</p>
+          <div className="space-y-2">
+            {board.board.slice(0, 5).map((b, i) => (
+              <div key={b.id} className="flex items-center justify-between text-sm">
+                <span>{i + 1}. {b.full_name}</span>
+                <span className="font-mono mono-num text-mint">{b.sales_total.toLocaleString("en-US")} so'm</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

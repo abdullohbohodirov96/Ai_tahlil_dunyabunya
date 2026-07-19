@@ -128,6 +128,39 @@ CREATE TABLE IF NOT EXISTS lead_activities (
   text TEXT,
   created_at TIMESTAMP DEFAULT now()
 );
+
+-- Vazifalar (Todo) moduli: deadline, holat, eslatmalar
+CREATE TABLE IF NOT EXISTS todos (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  description TEXT,
+  assignee_id INTEGER REFERENCES users(id),
+  created_by INTEGER REFERENCES users(id),
+  deadline TIMESTAMP,
+  status TEXT NOT NULL DEFAULT 'yangi' CHECK (status IN ('yangi','jarayonda','bajarildi')),
+  last_daily_reminder DATE,
+  reminded_5h BOOLEAN DEFAULT false,
+  reminded_1h BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT now()
+);
+
+-- Oylik va KPI maydonlari
+ALTER TABLE users ADD COLUMN IF NOT EXISTS base_salary NUMERIC DEFAULT 0;
+
+-- Eslatma yuborilganligini belgilash (follow-up uchun)
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS follow_up_reminded BOOLEAN DEFAULT false;
+
+-- SMM oylik kontent-reja: har bir sana uchun necha stories/post/carousel kerakligi
+CREATE TABLE IF NOT EXISTS content_plan (
+  id SERIAL PRIMARY KEY,
+  day DATE NOT NULL UNIQUE,
+  stories_count INTEGER DEFAULT 0,
+  posts_count INTEGER DEFAULT 0,
+  carousels_count INTEGER DEFAULT 0,
+  note TEXT,
+  last_reminder_sent DATE,
+  created_by INTEGER REFERENCES users(id)
+);
 `;
 
 async function main() {

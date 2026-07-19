@@ -34,6 +34,8 @@ export default function AdminPage() {
   const [perms, setPerms] = useState([]);
   const [resetRow, setResetRow] = useState(null);
   const [resetValue, setResetValue] = useState("");
+  const [salaryRow, setSalaryRow] = useState(null);
+  const [salaryValue, setSalaryValue] = useState("");
   const [settings, setSettings] = useState({});
 
   function load() {
@@ -101,6 +103,13 @@ export default function AdminPage() {
     await api.resetPassword(id, resetValue);
     setResetRow(null);
     setResetValue("");
+  }
+
+  async function submitSalary(id) {
+    await api.setSalary(id, Number(salaryValue) || 0);
+    setSalaryRow(null);
+    setSalaryValue("");
+    load();
   }
 
   async function saveSetting(key, value) {
@@ -213,6 +222,8 @@ export default function AdminPage() {
                 <th className="text-left px-4 py-3">Holat</th>
                 <th className="text-left px-4 py-3">Ruxsatlar</th>
                 <th className="text-left px-4 py-3">Parol</th>
+                <th className="text-left px-4 py-3">Oylik</th>
+                <th className="text-left px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
@@ -267,6 +278,37 @@ export default function AdminPage() {
                         {t("reset_password")}
                       </button>
                     )}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {salaryRow === emp.id ? (
+                      <div className="flex gap-1.5">
+                        <input
+                          type="number"
+                          autoFocus
+                          value={salaryValue}
+                          onChange={(e) => setSalaryValue(e.target.value)}
+                          placeholder="oylik (so'm)"
+                          className="bg-panelAlt border border-border rounded px-2 py-1 text-xs w-28"
+                        />
+                        <button onClick={() => submitSalary(emp.id)} className="text-xs text-mint hover:underline">OK</button>
+                        <button onClick={() => { setSalaryRow(null); setSalaryValue(""); }} className="text-xs text-textMuted hover:underline">✕</button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setSalaryRow(emp.id); setSalaryValue(emp.base_salary || ""); }}
+                        className="text-xs text-textMuted hover:text-accent"
+                      >
+                        {Number(emp.base_salary || 0) > 0 ? `${Number(emp.base_salary).toLocaleString("en-US")} so'm` : "Oylik kiritish"}
+                      </button>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => { if (confirm(`${emp.full_name}ni butunlay o'chirasizmi?`)) { api.deleteEmployee(emp.id).then(load); } }}
+                      className="text-xs text-textMuted hover:text-coral"
+                    >
+                      O'chirish
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -421,6 +463,12 @@ export default function AdminPage() {
               label="Business akkaunt ID"
               dbKey="ig_business_account_id"
               currentInfo={settings.ig_business_account_id}
+              onSave={saveSetting}
+            />
+            <SettingField
+              label="Facebook sahifa ID (FB tab uchun)"
+              dbKey="fb_page_id"
+              currentInfo={settings.fb_page_id}
               onSave={saveSetting}
             />
           </div>

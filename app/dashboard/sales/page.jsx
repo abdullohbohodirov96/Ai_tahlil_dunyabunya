@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, Fragment } from "react";
-import { RefreshCw, ChevronDown, Search, LayoutGrid, List, Download, AlertCircle, Plus } from "lucide-react";
+import { RefreshCw, ChevronDown, Search, LayoutGrid, List, Download, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { useUser } from "../layout.jsx";
 import StatCard from "../../../components/StatCard.jsx";
 import AccessDenied from "../../../components/AccessDenied.jsx";
@@ -61,11 +61,15 @@ export default function SalesPage() {
   const canSync = user.role === "admin" || user.role === "marketing_head" || canEdit("sales");
   const [leads, setLeads] = useState([]);
   const [stats, setStats] = useState(null);
+  const [board, setBoard] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [msg, setMsg] = useState("");
   const [view, setView] = useState("table");
   const [search, setSearch] = useState("");
   const [qualityFilter, setQualityFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [expandedId, setExpandedId] = useState(null);
   const [modalLead, setModalLead] = useState(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -79,6 +83,7 @@ export default function SalesPage() {
     setLeads(l);
     if (user.role !== "sales_manager") {
       api.salesStats().then(setStats).catch(() => {});
+      api.leaderboard().then(setBoard).catch(() => {});
     }
   }
 
@@ -89,22 +94,6 @@ export default function SalesPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function submitAddLead(e) {
-    e.preventDefault();
-    setAddError("");
-    setAdding(true);
-    try {
-      await api.createLead(addForm);
-      setAddForm({ full_name: "", phone: "", source: "" });
-      setAddModalOpen(false);
-      load();
-    } catch (err) {
-      setAddError(err.message);
-    } finally {
-      setAdding(false);
-    }
-  }
 
   async function handleSync() {
     setSyncing(true);
@@ -125,6 +114,22 @@ export default function SalesPage() {
     load();
   }
 
+  async function submitAddLead(e) {
+    e.preventDefault();
+    setAddError("");
+    setAdding(true);
+    try {
+      await api.createLead(addForm);
+      setAddForm({ full_name: "", phone: "", source: "" });
+      setAddModalOpen(false);
+      load();
+    } catch (err) {
+      setAddError(err.message);
+    } finally {
+      setAdding(false);
+    }
+  }
+
   const filteredLeads = useMemo(() => {
     return leads.filter((l) => {
       if (search) {
@@ -132,9 +137,14 @@ export default function SalesPage() {
         if (!(l.full_name?.toLowerCase().includes(q) || l.phone?.includes(q))) return false;
       }
       if (qualityFilter && l.quality !== qualityFilter) return false;
+      if (statusFilter === "sotilgan" && !l.sold) return false;
+      if (statusFilter === "sotilmagan" && l.sold) return false;
+      if (statusFilter === "qayta_aloqa" && !l.follow_up_date) return false;
+      if (fromDate && new Date(l.created_at) < new Date(fromDate)) return false;
+      if (toDate && new Date(l.created_at) > new Date(toDate + "T23:59:59")) return false;
       return true;
     });
-  }, [leads, search, qualityFilter]);
+  }, [leads, search, qualityFilter, statusFilter, fromDate, toDate]);
 
   const overdueCount = leads.filter(isOverdue).length;
 
@@ -197,6 +207,50 @@ export default function SalesPage() {
         </div>
       )}
 
+      {board && board.board?.length > 0 && (
+        <div className="bg-panel border border-border rounded-xl overflow-hidden">
+          <div className="px-4 py-3 bg-panelAlt flex items-center justify-between flex-wrap gap-2">
+            <span className="text-xs uppercase text-textMuted font-medium">Leaderboard · Oylik & KPI</span>
+            <span className="text-xs text-textMuted">
+              Jami: {Number(board.overall.total_sales).toLocaleString("en-US")} so'm · {board.overall.total_count} sotuv
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-panelAlt/60 text-textMuted text-xs uppercase">
+                <tr>
+                  <th className="text-left px-4 py-2">#</th>
+                  <th className="text-left px-4 py-2">Menejer</th>
+                  <th className="text-right px-4 py-2">Sotuvlar</th>
+                  <th className="text-right px-4 py-2">Summa (so'm)</th>
+                  <th className="text-right px-4 py-2">Oylik (fix)</th>
+                  <th className="text-right px-4 py-2">KPI bonus</th>
+                  <th className="text-right px-4 py-2">Jami oylik</th>
+                  <th className="text-right px-4 py-2">Keyingi KPI'gacha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {board.board.map((b, i) => (
+                  <tr key={b.id} className="border-t border-border/60">
+                    <td className="px-4 py-2.5">{i + 1}</td>
+                    <td className="px-4 py-2.5">{b.full_name}</td>
+                    <td className="px-4 py-2.5 text-right font-mono mono-num">{b.sales_count}</td>
+                    <td className="px-4 py-2.5 text-right font-mono mono-num text-mint">{b.sales_total.toLocaleString("en-US")}</td>
+                    <td className="px-4 py-2.5 text-right font-mono mono-num">{b.base_salary.toLocaleString("en-US")}</td>
+                    <td className="px-4 py-2.5 text-right font-mono mono-num text-accent">{b.kpi_bonus.toLocaleString("en-US")}</td>
+                    <td className="px-4 py-2.5 text-right font-mono mono-num font-medium">{b.projected_salary.toLocaleString("en-US")}</td>
+                    <td className="px-4 py-2.5 text-right font-mono mono-num text-textMuted">{b.next_kpi_in.toLocaleString("en-US")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="px-4 py-2 text-xs text-textMuted border-t border-border/60">
+            KPI qoidasi: minimal 50 mln so'm sotuv, undan keyin har 50 mln uchun 500 000 so'm bonus.
+          </p>
+        </div>
+      )}
+
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-xs">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-textMuted" />
@@ -217,6 +271,20 @@ export default function SalesPage() {
             <option key={q.id} value={q.id}>{q.label}</option>
           ))}
         </select>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="bg-panel border border-border rounded-lg px-3 py-2 text-sm"
+        >
+          <option value="">Barcha holatlar</option>
+          <option value="sotilgan">Sotilganlar</option>
+          <option value="sotilmagan">Sotilmaganlar</option>
+          <option value="qayta_aloqa">Qayta aloqa belgilanganlar</option>
+        </select>
+        <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)}
+          className="bg-panel border border-border rounded-lg px-3 py-2 text-sm" title="Boshlanish sanasi" />
+        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)}
+          className="bg-panel border border-border rounded-lg px-3 py-2 text-sm" title="Tugash sanasi" />
         <div className="flex gap-1 bg-panel border border-border rounded-lg p-1 ml-auto">
           <button
             onClick={() => setView("table")}
@@ -274,13 +342,22 @@ export default function SalesPage() {
                       <td className="px-4 py-3">
                         {lead.sold ? (
                           <span className="text-xs text-mint">
-                            Sotildi{lead.sale_amount ? ` · $${Number(lead.sale_amount).toLocaleString("en-US")}` : ""}
+                            Sotildi{lead.sale_amount ? ` · ${Number(lead.sale_amount).toLocaleString("en-US")} so'm` : ""}
                           </span>
                         ) : (
                           <span className="text-xs text-textMuted">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        {canSync && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); if (confirm("Bu leadni o'chirasizmi?")) { api.deleteLead(lead.id).then(load); } }}
+                            className="text-textMuted hover:text-coral mr-2 align-middle"
+                            title="O'chirish"
+                          >
+                            <Trash2 size={14} className="inline" />
+                          </button>
+                        )}
                         <ChevronDown size={16} className={`text-textMuted transition-transform inline-block ${isOpen ? "rotate-180" : ""}`} />
                       </td>
                     </tr>
