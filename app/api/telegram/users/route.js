@@ -11,7 +11,12 @@ export async function GET(req) {
   const joined = searchParams.get("joined");
   const status = searchParams.get("status");
 
-  let sql = "SELECT * FROM tg_users WHERE 1=1";
+  let sql = `
+    SELECT tg.*, u.full_name AS linked_full_name, u.username AS linked_username
+    FROM tg_users tg
+    LEFT JOIN users u ON u.id = tg.linked_user_id
+    WHERE 1=1
+  `;
   const params = [];
   let idx = 1;
   if (started !== null) {

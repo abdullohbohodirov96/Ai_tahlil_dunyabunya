@@ -100,6 +100,9 @@ CREATE TABLE IF NOT EXISTS account_permissions (
   can_edit BOOLEAN DEFAULT false,
   UNIQUE (user_id, module)
 );
+
+-- Telegram akkauntini web foydalanuvchisiga bog'lash uchun (eski bazalarga ham qo'shiladi)
+ALTER TABLE tg_users ADD COLUMN IF NOT EXISTS linked_user_id INTEGER REFERENCES users(id);
 `;
 
 async function main() {

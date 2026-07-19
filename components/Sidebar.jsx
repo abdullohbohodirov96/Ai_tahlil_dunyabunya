@@ -1,16 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Megaphone, Users, Send, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Megaphone, Users, Send, Settings, LogOut, Link2 } from "lucide-react";
 import { useLanguage } from "../lib/i18n.js";
 import { usePermissions } from "../lib/permissions.js";
+import TelegramLinkModal from "./TelegramLinkModal.jsx";
 
 export default function Sidebar({ user }) {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useLanguage();
   const { canView } = usePermissions();
+  const [linkModalOpen, setLinkModalOpen] = useState(false);
 
   const links = [
     { to: "/dashboard", label: t("nav_overview"), icon: LayoutDashboard, always: true },
@@ -68,9 +71,16 @@ export default function Sidebar({ user }) {
         })}
       </nav>
 
-      <div className="px-4 py-4 border-t border-border">
+      <div className="px-4 py-4 border-t border-border space-y-2">
         <p className="text-sm font-medium truncate">{user?.full_name}</p>
-        <p className="text-xs text-textMuted mb-3">{user?.role}</p>
+        <p className="text-xs text-textMuted">{user?.role}</p>
+        <button
+          onClick={() => setLinkModalOpen(true)}
+          className="flex items-center gap-1.5 text-xs text-accent hover:underline"
+        >
+          <Link2 size={13} />
+          Telegram ulash
+        </button>
         <button
           onClick={logout}
           className="flex items-center gap-1.5 text-xs text-coral hover:underline"
@@ -79,6 +89,7 @@ export default function Sidebar({ user }) {
           {t("logout")}
         </button>
       </div>
+      <TelegramLinkModal open={linkModalOpen} onClose={() => setLinkModalOpen(false)} />
     </aside>
   );
 }

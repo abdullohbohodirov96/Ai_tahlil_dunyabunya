@@ -72,6 +72,7 @@ export default function TelegramPage() {
               <th className="text-left px-4 py-3">Foydalanuvchi</th>
               <th className="text-left px-4 py-3">/start</th>
               <th className="text-left px-4 py-3">Gruppa</th>
+              <th className="text-left px-4 py-3">Bog'langan xodim</th>
               <th className="text-left px-4 py-3">Vazifa berish</th>
             </tr>
           </thead>
@@ -89,6 +90,13 @@ export default function TelegramPage() {
                   <span className={u.joined_group ? "text-mint" : "text-textMuted"}>
                     {u.joined_group ? u.group_title || "Ha" : "Yo'q"}
                   </span>
+                </td>
+                <td className="px-4 py-3">
+                  {u.linked_full_name ? (
+                    <span className="text-accent text-xs">{u.linked_full_name}</span>
+                  ) : (
+                    <span className="text-textMuted text-xs">—</span>
+                  )}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
@@ -110,7 +118,7 @@ export default function TelegramPage() {
             ))}
             {!users.length && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-textMuted">
+                <td colSpan={5} className="px-4 py-8 text-center text-textMuted">
                   Hozircha foydalanuvchi yo'q. Bot tokeni sozlangach, /start bosganlar shu yerda ko'rinadi.
                 </td>
               </tr>
