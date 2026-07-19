@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../../lib/auth.js";
-import { createLinkToken, getBotUsername } from "../../../../../lib/telegram.js";
+import { createLinkToken, getBotUsername, hasTelegramToken } from "../../../../../lib/telegram.js";
 
 export async function POST(req) {
   const { user, error } = requireAuth(req);
   if (error) return error;
 
-  if (!process.env.TELEGRAM_BOT_TOKEN) {
+  if (!(await hasTelegramToken())) {
     return NextResponse.json(
-      { error: "Telegram bot hali sozlanmagan (TELEGRAM_BOT_TOKEN yo'q)" },
+      { error: "Telegram bot hali sozlanmagan. Sozlamalar bo'limida token kiriting." },
       { status: 400 }
     );
   }

@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "../../../../lib/auth.js";
 import { query } from "../../../../lib/db.js";
+import { getSetting } from "../../../../lib/settings.js";
 
 export async function GET(req) {
   const { error } = requireAuth(req);
   if (error) return error;
 
-  const hasToken = !!process.env.IG_ACCESS_TOKEN;
-  if (!hasToken) {
+  const token = await getSetting("ig_access_token", "IG_ACCESS_TOKEN");
+  if (!token) {
     return NextResponse.json({
       connected: false,
       platforms: [

@@ -103,6 +103,14 @@ CREATE TABLE IF NOT EXISTS account_permissions (
 
 -- Telegram akkauntini web foydalanuvchisiga bog'lash uchun (eski bazalarga ham qo'shiladi)
 ALTER TABLE tg_users ADD COLUMN IF NOT EXISTS linked_user_id INTEGER REFERENCES users(id);
+
+-- Barcha tashqi xizmat ulanishlarini (Sheets, Telegram, Meta, Instagram, AI) to'g'ridan-to'g'ri
+-- webdan boshqarish uchun — Vercel Environment Variables'ga muhtoj bo'lmaslik uchun
+CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT,
+  updated_at TIMESTAMP DEFAULT now()
+);
 `;
 
 async function main() {

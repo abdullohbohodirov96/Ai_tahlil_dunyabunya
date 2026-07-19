@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "../../../../lib/db.js";
 import { requireAuth } from "../../../../lib/auth.js";
+import { getSetting } from "../../../../lib/settings.js";
 
 async function buildContext() {
   const today = new Date().toISOString().slice(0, 10);
@@ -40,7 +41,7 @@ export async function POST(req) {
   const { message } = await req.json();
   if (!message) return NextResponse.json({ error: "Xabar matni kerak" }, { status: 400 });
 
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = await getSetting("anthropic_api_key", "ANTHROPIC_API_KEY");
   const context = await buildContext();
 
   if (!apiKey) {

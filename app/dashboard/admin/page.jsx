@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { KeyRound, ShieldCheck, UserPlus } from "lucide-react";
 import { api } from "../../../lib/apiClient.js";
 import { useLanguage } from "../../../lib/i18n.js";
+import SettingField from "../../../components/SettingField.jsx";
 
 const roleLabels = {
   admin: "Admin",
@@ -34,10 +35,12 @@ export default function AdminPage() {
   const [perms, setPerms] = useState([]);
   const [resetRow, setResetRow] = useState(null);
   const [resetValue, setResetValue] = useState("");
+  const [settings, setSettings] = useState({});
 
   function load() {
     api.employees().then(setEmployees).catch(() => {});
     api.connections().then(setConnections).catch(() => {});
+    api.getSettings().then(setSettings).catch(() => {});
   }
 
   useEffect(load, []);
@@ -100,6 +103,11 @@ export default function AdminPage() {
     await api.resetPassword(id, resetValue);
     setResetRow(null);
     setResetValue("");
+  }
+
+  async function saveSetting(key, value) {
+    await api.updateSetting(key, value);
+    load();
   }
 
   return (
@@ -320,10 +328,92 @@ export default function AdminPage() {
             </div>
           ))}
         </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="bg-panel border border-border rounded-xl p-5 space-y-4">
+            <p className="font-medium text-sm">Telegram Bot</p>
+            <SettingField
+              label="Bot tokeni (@BotFather'dan)"
+              dbKey="telegram_bot_token"
+              currentInfo={settings.telegram_bot_token}
+              onSave={saveSetting}
+            />
+            <SettingField
+              label="Bot username (ixtiyoriy, @ belgisisiz)"
+              dbKey="telegram_bot_username"
+              currentInfo={settings.telegram_bot_username}
+              onSave={saveSetting}
+            />
+          </div>
+
+          <div className="bg-panel border border-border rounded-xl p-5 space-y-4">
+            <p className="font-medium text-sm">Google Sheets</p>
+            <SettingField
+              label="Service account JSON (to'liq matni)"
+              dbKey="google_service_account_json"
+              currentInfo={settings.google_service_account_json}
+              multiline
+              onSave={saveSetting}
+            />
+            <SettingField
+              label="Sheet ID"
+              dbKey="google_sheet_id"
+              currentInfo={settings.google_sheet_id}
+              onSave={saveSetting}
+            />
+            <SettingField
+              label="Range (masalan Leads!A2:F)"
+              dbKey="google_sheet_range"
+              currentInfo={settings.google_sheet_range}
+              onSave={saveSetting}
+            />
+          </div>
+
+          <div className="bg-panel border border-border rounded-xl p-5 space-y-4">
+            <p className="font-medium text-sm">Meta Ads (Target)</p>
+            <SettingField
+              label="Access token"
+              dbKey="meta_ads_access_token"
+              currentInfo={settings.meta_ads_access_token}
+              onSave={saveSetting}
+            />
+            <SettingField
+              label="Akkaunt ID"
+              dbKey="meta_ads_account_id"
+              currentInfo={settings.meta_ads_account_id}
+              onSave={saveSetting}
+            />
+          </div>
+
+          <div className="bg-panel border border-border rounded-xl p-5 space-y-4">
+            <p className="font-medium text-sm">Instagram (SMM)</p>
+            <SettingField
+              label="Access token"
+              dbKey="ig_access_token"
+              currentInfo={settings.ig_access_token}
+              onSave={saveSetting}
+            />
+            <SettingField
+              label="Business akkaunt ID"
+              dbKey="ig_business_account_id"
+              currentInfo={settings.ig_business_account_id}
+              onSave={saveSetting}
+            />
+          </div>
+
+          <div className="bg-panel border border-border rounded-xl p-5 space-y-4 md:col-span-2">
+            <p className="font-medium text-sm">AI Assistent</p>
+            <SettingField
+              label="Anthropic API kaliti"
+              dbKey="anthropic_api_key"
+              currentInfo={settings.anthropic_api_key}
+              onSave={saveSetting}
+            />
+          </div>
+        </div>
+
         <p className="text-xs text-textMuted">
-          Har bir xizmatni ulash uchun Vercel loyihasi → Settings → Environment Variables bo'limida
-          tegishli kalitni kiriting (TELEGRAM_BOT_TOKEN, GOOGLE_SERVICE_ACCOUNT_JSON, META_ADS_ACCESS_TOKEN,
-          IG_ACCESS_TOKEN) va qayta deploy qiling.
+          Bu yerda kiritilgan qiymatlar darhol ishga tushadi — Vercel'da qayta deploy qilish shart emas.
         </p>
       </section>
     </div>
