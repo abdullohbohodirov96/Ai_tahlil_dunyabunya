@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "../../../../lib/db.js";
 import { requireAuth } from "../../../../lib/auth.js";
+import { hasModuleAccess } from "../../../../lib/permissionCheck.js";
 import { fetchLeadsFromSheet } from "../../../../lib/sheetsService.js";
 
 export const dynamic = "force-dynamic";
@@ -26,8 +27,13 @@ async function bumpDaily(managerId, field) {
 }
 
 export async function POST(req) {
-  const { error } = requireAuth(req, "admin", "marketing_head");
+  const { user, error } = requireAuth(req);
   if (error) return error;
+
+  const canEditSales = await hasModuleAccess(user, "sales", "can_edit");
+  if (!canEditSales) {
+    return NextResponse.json({ error: "Sheetdan sinxronlash uchun ruxsatingiz yo'q" }, { status: 403 });
+  }
 
   try {
     const rows = await fetchLeadsFromSheet();

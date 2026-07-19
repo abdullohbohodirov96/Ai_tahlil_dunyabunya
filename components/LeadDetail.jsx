@@ -27,6 +27,7 @@ export default function LeadDetail({ lead, onSave }) {
     sale_amount: lead.sale_amount || "",
   });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [activities, setActivities] = useState([]);
   const [newNote, setNewNote] = useState("");
   const [addingNote, setAddingNote] = useState(false);
@@ -42,6 +43,7 @@ export default function LeadDetail({ lead, onSave }) {
 
   async function handleSave() {
     setSaving(true);
+    setSaveError("");
     try {
       await onSave(lead.id, {
         ...form,
@@ -49,6 +51,8 @@ export default function LeadDetail({ lead, onSave }) {
         follow_up_date: form.follow_up_date || null,
       });
       loadActivities();
+    } catch (e) {
+      setSaveError(e.message || "Saqlashda xatolik yuz berdi");
     } finally {
       setSaving(false);
     }
@@ -57,10 +61,13 @@ export default function LeadDetail({ lead, onSave }) {
   async function handleAddNote() {
     if (!newNote.trim()) return;
     setAddingNote(true);
+    setSaveError("");
     try {
       await api.addLeadActivity(lead.id, newNote.trim());
       setNewNote("");
       loadActivities();
+    } catch (e) {
+      setSaveError(e.message || "Izoh qo'shishda xatolik");
     } finally {
       setAddingNote(false);
     }
@@ -172,6 +179,7 @@ export default function LeadDetail({ lead, onSave }) {
         >
           {saving ? "Saqlanmoqda..." : "Saqlash"}
         </button>
+        {saveError && <p className="text-coral text-xs">{saveError}</p>}
       </div>
 
       <div className="space-y-3">

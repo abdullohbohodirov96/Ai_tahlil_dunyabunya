@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "../../../../../lib/db.js";
 import { requireAuth } from "../../../../../lib/auth.js";
+import { hasModuleAccess } from "../../../../../lib/permissionCheck.js";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +25,13 @@ const contactLabels = { ha: "Bog'landi", yoq: "Bog'lanmadi", kotarmadi: "Ko'tarm
 const qualityLabels = { issiq: "Issiq", iliq: "Iliq", sovuq: "Sovuq" };
 
 export async function PATCH(req, { params }) {
-  const { user, error } = requireAuth(req, "sales_manager", "admin");
+  const { user, error } = requireAuth(req);
   if (error) return error;
+
+  const canEditSales = await hasModuleAccess(user, "sales", "can_edit");
+  if (!canEditSales) {
+    return NextResponse.json({ error: "Sotuvni tahrirlash uchun ruxsatingiz yo'q" }, { status: 403 });
+  }
 
   const body = await req.json();
   const { status, note, contact_status, quality, follow_up_date, sold, sale_amount } = body;

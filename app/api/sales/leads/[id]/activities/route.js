@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "../../../../../../lib/db.js";
 import { requireAuth } from "../../../../../../lib/auth.js";
+import { hasModuleAccess } from "../../../../../../lib/permissionCheck.js";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +25,13 @@ export async function GET(req, { params }) {
 }
 
 export async function POST(req, { params }) {
-  const { user, error } = requireAuth(req, "sales_manager", "admin");
+  const { user, error } = requireAuth(req);
   if (error) return error;
+
+  const canEditSales = await hasModuleAccess(user, "sales", "can_edit");
+  if (!canEditSales) {
+    return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+  }
 
   const { text } = await req.json();
   if (!text) return NextResponse.json({ error: "Matn kerak" }, { status: 400 });

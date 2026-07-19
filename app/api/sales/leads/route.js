@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { query } from "../../../../lib/db.js";
 import { requireAuth } from "../../../../lib/auth.js";
+import { hasModuleAccess } from "../../../../lib/permissionCheck.js";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +20,13 @@ export async function GET(req) {
 
 // Qo'lda (ruchnoy) yangi lead qo'shish
 export async function POST(req) {
-  const { user, error } = requireAuth(req, "admin", "marketing_head", "sales_manager");
+  const { user, error } = requireAuth(req);
   if (error) return error;
+
+  const canEditSales = await hasModuleAccess(user, "sales", "can_edit");
+  if (!canEditSales) {
+    return NextResponse.json({ error: "Lead qo'shish uchun ruxsatingiz yo'q" }, { status: 403 });
+  }
 
   const { full_name, phone, source, manager_id } = await req.json();
   if (!full_name || !phone) {
