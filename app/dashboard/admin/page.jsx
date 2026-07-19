@@ -354,7 +354,7 @@ export default function AdminPage() {
               currentInfo={settings.google_sheet_range}
               onSave={saveSetting}
             />
-            <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
               <SettingField
                 label="Ism ustuni (masalan C)"
                 dbKey="google_sheet_col_name"
@@ -362,9 +362,15 @@ export default function AdminPage() {
                 onSave={saveSetting}
               />
               <SettingField
-                label="Telefon ustuni (masalan E)"
+                label="Telefon ustuni — asosiy (masalan E)"
                 dbKey="google_sheet_col_phone"
                 currentInfo={settings.google_sheet_col_phone}
+                onSave={saveSetting}
+              />
+              <SettingField
+                label="Telefon ustuni — zaxira (masalan D)"
+                dbKey="google_sheet_col_phone_alt"
+                currentInfo={settings.google_sheet_col_phone_alt}
                 onSave={saveSetting}
               />
               <SettingField
@@ -373,9 +379,17 @@ export default function AdminPage() {
                 currentInfo={settings.google_sheet_col_source}
                 onSave={saveSetting}
               />
+              <SettingField
+                label="Manba — qo'shimcha (masalan B)"
+                dbKey="google_sheet_col_source_extra"
+                currentInfo={settings.google_sheet_col_source_extra}
+                onSave={saveSetting}
+              />
             </div>
             <p className="text-xs text-textMuted">
-              Ustunlarni ko'rsatmasangiz, standart tartib ishlatiladi: B=Ism, C=Telefon, D=Manba.
+              Telefon: avval "asosiy" ustunga qaraydi, bo'sh bo'lsa "zaxira"dan oladi. Manba: ikkalasi
+              ham to'ldirilsa, birlashtirib ko'rsatadi (masalan "Toshkent shahri · 150 m² dan ko'p").
+              Ustunlarni ko'rsatmasangiz standart tartib ishlaydi: B=Ism, C=Telefon, D=Manba.
             </p>
           </div>
 
