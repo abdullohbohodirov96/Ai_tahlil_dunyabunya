@@ -3,12 +3,18 @@
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/apiClient.js";
 import { useLanguage } from "../../../lib/i18n.js";
+import { usePermissions } from "../../../lib/permissions.js";
+import { useUser } from "../layout.jsx";
+import AccessDenied from "../../../components/AccessDenied.jsx";
 
 export default function TelegramPage() {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("all");
   const [taskDraft, setTaskDraft] = useState({});
   const { t } = useLanguage();
+  const { canView } = usePermissions();
+  const user = useUser();
+  const hasAccess = user.role === "admin" || user.role === "marketing_head" || canView("telegram");
 
   async function load() {
     let query = "";
@@ -29,6 +35,8 @@ export default function TelegramPage() {
     await api.assignTask(userId, title);
     setTaskDraft((d) => ({ ...d, [userId]: "" }));
   }
+
+  if (!hasAccess) return <AccessDenied />;
 
   return (
     <div className="space-y-8">

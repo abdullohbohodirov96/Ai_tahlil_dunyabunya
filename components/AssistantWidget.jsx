@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { Bot, X, Send } from "lucide-react";
 import { api } from "../lib/apiClient.js";
 
 export default function AssistantWidget() {
@@ -45,8 +46,8 @@ export default function AssistantWidget() {
   return (
     <>
       {open && (
-        <div className="fixed bottom-24 right-6 w-96 max-w-[calc(100vw-3rem)] h-[28rem] bg-panel border border-border rounded-2xl shadow-2xl flex flex-col z-50">
-          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+        <div className="fixed bottom-24 right-6 w-96 max-w-[calc(100vw-3rem)] h-[28rem] bg-panel border border-border rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden">
+          <div className="px-4 py-3 border-b border-border flex items-center gap-2 bg-panelAlt/50">
             <span className="w-2 h-2 rounded-full bg-accent pulse-dot" />
             <span className="font-display font-medium text-sm">JARVIS Assistent</span>
           </div>
@@ -79,9 +80,9 @@ export default function AssistantWidget() {
             <button
               onClick={send}
               disabled={loading}
-              className="bg-accent text-base rounded-lg px-3 text-sm font-medium hover:bg-accentDim disabled:opacity-50"
+              className="bg-accent text-base rounded-lg w-9 flex items-center justify-center hover:bg-accentDim disabled:opacity-50 transition-colors"
             >
-              Yubor
+              <Send size={15} />
             </button>
           </div>
         </div>
@@ -89,10 +90,10 @@ export default function AssistantWidget() {
 
       <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-accent text-base flex items-center justify-center shadow-xl hover:bg-accentDim transition-colors z-50"
+        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-accent text-base flex items-center justify-center shadow-xl hover:bg-accentDim hover:scale-105 transition-all z-50"
         aria-label="AI assistentni ochish"
       >
-        <span className="text-xl">{open ? "✕" : "◎"}</span>
+        {open ? <X size={22} /> : <Bot size={22} />}
       </button>
     </>
   );

@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/apiClient.js";
+import { RefreshCw } from "lucide-react";
 import { useUser } from "../layout.jsx";
 import StatCard from "../../../components/StatCard.jsx";
+import AccessDenied from "../../../components/AccessDenied.jsx";
 import { useLanguage } from "../../../lib/i18n.js";
+import { usePermissions } from "../../../lib/permissions.js";
 
 const statusLabels = {
   yangi: "Yangi",
@@ -17,6 +20,9 @@ const statusLabels = {
 export default function SalesPage() {
   const user = useUser();
   const { t } = useLanguage();
+  const { canView, canEdit } = usePermissions();
+  const hasAccess = user.role === "admin" || user.role === "sales_manager" || canView("sales");
+  const canSync = user.role === "admin" || user.role === "marketing_head" || canEdit("sales");
   const [leads, setLeads] = useState([]);
   const [stats, setStats] = useState(null);
   const [syncing, setSyncing] = useState(false);
@@ -54,6 +60,8 @@ export default function SalesPage() {
     load();
   }
 
+  if (!hasAccess) return <AccessDenied />;
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -61,12 +69,13 @@ export default function SalesPage() {
           <h1 className="font-display text-2xl font-semibold">{t("sales_title")}</h1>
           <p className="text-textMuted text-sm mt-1">{t("sales_subtitle")}</p>
         </div>
-        {(user.role === "admin" || user.role === "marketing_head") && (
+        {canSync && (
           <button
             onClick={handleSync}
             disabled={syncing}
-            className="bg-accent text-base font-medium rounded-lg px-4 py-2 text-sm hover:bg-accentDim disabled:opacity-50"
+            className="bg-accent text-base font-medium rounded-lg px-4 py-2 text-sm hover:bg-accentDim disabled:opacity-50 transition-colors flex items-center gap-2"
           >
+            <RefreshCw size={14} className={syncing ? "animate-spin" : ""} />
             {syncing ? t("syncing") : t("sync_sheet")}
           </button>
         )}

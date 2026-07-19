@@ -3,6 +3,7 @@
 import { useEffect, useState, createContext, useContext } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "../../lib/apiClient.js";
+import { PermissionsProvider } from "../../lib/permissions.js";
 import Sidebar from "../../components/Sidebar.jsx";
 import PulseStrip from "../../components/PulseStrip.jsx";
 import AssistantWidget from "../../components/AssistantWidget.jsx";
@@ -35,14 +36,16 @@ export default function DashboardLayout({ children }) {
 
   return (
     <UserContext.Provider value={user}>
-      <div className="flex">
-        <Sidebar user={user} />
-        <div className="flex-1 min-w-0">
-          <PulseStrip />
-          <main className="p-8 max-w-6xl mx-auto">{children}</main>
+      <PermissionsProvider>
+        <div className="flex">
+          <Sidebar user={user} />
+          <div className="flex-1 min-w-0">
+            <PulseStrip />
+            <main className="p-8 max-w-6xl mx-auto">{children}</main>
+          </div>
+          <AssistantWidget />
         </div>
-        <AssistantWidget />
-      </div>
+      </PermissionsProvider>
     </UserContext.Provider>
   );
 }

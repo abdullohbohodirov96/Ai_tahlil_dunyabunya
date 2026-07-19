@@ -2,20 +2,35 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, Megaphone, Users, Send, Settings, LogOut } from "lucide-react";
 import { useLanguage } from "../lib/i18n.js";
+import { usePermissions } from "../lib/permissions.js";
 
 export default function Sidebar({ user }) {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useLanguage();
+  const { canView } = usePermissions();
 
   const links = [
-    { to: "/dashboard", label: t("nav_overview"), icon: "◎" },
-    { to: "/dashboard/marketing", label: t("nav_marketing"), icon: "◈" },
-    { to: "/dashboard/sales", label: t("nav_sales"), icon: "◆" },
-    { to: "/dashboard/telegram", label: t("nav_telegram"), icon: "◇" },
-    { to: "/dashboard/admin", label: t("nav_admin"), icon: "⚙" },
+    { to: "/dashboard", label: t("nav_overview"), icon: LayoutDashboard, always: true },
+    {
+      to: "/dashboard/marketing",
+      label: t("nav_marketing"),
+      icon: Megaphone,
+      module: ["marketing_target", "marketing_smm"],
+    },
+    { to: "/dashboard/sales", label: t("nav_sales"), icon: Users, module: ["sales"] },
+    { to: "/dashboard/telegram", label: t("nav_telegram"), icon: Send, module: ["telegram"] },
+    { to: "/dashboard/admin", label: t("nav_admin"), icon: Settings, adminOnly: true },
   ];
+
+  function isVisible(link) {
+    if (link.always) return true;
+    if (link.adminOnly) return user.role === "admin";
+    if (user.role === "admin") return true;
+    return link.module.some((m) => canView(m));
+  }
 
   function logout() {
     localStorage.removeItem("jarvis_token");
@@ -33,19 +48,20 @@ export default function Sidebar({ user }) {
       </div>
 
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {links.map((l) => {
+        {links.filter(isVisible).map((l) => {
           const isActive = l.to === "/dashboard" ? pathname === l.to : pathname.startsWith(l.to);
+          const Icon = l.icon;
           return (
             <Link
               key={l.to}
               href={l.to}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ${
                 isActive
                   ? "bg-accent/15 text-accent border border-accent/30"
-                  : "text-textMuted hover:text-textPrimary hover:bg-panelAlt border border-transparent"
+                  : "text-textMuted hover:text-textPrimary hover:bg-panelAlt hover:translate-x-0.5 border border-transparent"
               }`}
             >
-              <span className="text-base leading-none">{l.icon}</span>
+              <Icon size={17} strokeWidth={2} />
               {l.label}
             </Link>
           );
@@ -55,7 +71,11 @@ export default function Sidebar({ user }) {
       <div className="px-4 py-4 border-t border-border">
         <p className="text-sm font-medium truncate">{user?.full_name}</p>
         <p className="text-xs text-textMuted mb-3">{user?.role}</p>
-        <button onClick={logout} className="text-xs text-coral hover:underline">
+        <button
+          onClick={logout}
+          className="flex items-center gap-1.5 text-xs text-coral hover:underline"
+        >
+          <LogOut size={13} />
           {t("logout")}
         </button>
       </div>

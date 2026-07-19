@@ -3,18 +3,29 @@
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/apiClient.js";
 import StatCard from "../../../components/StatCard.jsx";
+import AccessDenied from "../../../components/AccessDenied.jsx";
 import { useLanguage } from "../../../lib/i18n.js";
+import { usePermissions } from "../../../lib/permissions.js";
+import { useUser } from "../layout.jsx";
 
 export default function MarketingPage() {
   const [target, setTarget] = useState(null);
   const [smm, setSmm] = useState(null);
-  const [tab, setTab] = useState("target");
   const { t } = useLanguage();
+  const { canView } = usePermissions();
+  const user = useUser();
+  const isAdmin = user.role === "admin";
+  const canTarget = isAdmin || canView("marketing_target");
+  const canSmm = isAdmin || canView("marketing_smm");
+  const [tab, setTab] = useState(canTarget ? "target" : "smm");
 
   useEffect(() => {
-    api.target().then(setTarget).catch(() => {});
-    api.smm().then(setSmm).catch(() => {});
+    if (canTarget) api.target().then(setTarget).catch(() => {});
+    if (canSmm) api.smm().then(setSmm).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (!canTarget && !canSmm) return <AccessDenied />;
 
   return (
     <div className="space-y-8">
@@ -25,9 +36,9 @@ export default function MarketingPage() {
 
       <div className="flex gap-2">
         {[
-          { id: "target", label: "Target" },
-          { id: "smm", label: "SMM" },
-        ].map((t) => (
+          canTarget && { id: "target", label: "Target" },
+          canSmm && { id: "smm", label: "SMM" },
+        ].filter(Boolean).map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}

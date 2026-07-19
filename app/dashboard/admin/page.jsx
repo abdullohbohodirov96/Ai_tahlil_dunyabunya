@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { KeyRound, ShieldCheck, UserPlus } from "lucide-react";
 import { api } from "../../../lib/apiClient.js";
 import { useLanguage } from "../../../lib/i18n.js";
 
@@ -19,14 +20,20 @@ const modules = [
   { id: "telegram", label: "Telegram" },
 ];
 
+const emptyPerms = () =>
+  modules.reduce((acc, m) => ({ ...acc, [m.id]: { can_view: false, can_edit: false } }), {});
+
 export default function AdminPage() {
   const { t } = useLanguage();
   const [employees, setEmployees] = useState([]);
   const [connections, setConnections] = useState([]);
   const [form, setForm] = useState({ full_name: "", username: "", password: "", role: "sales_manager" });
+  const [newPerms, setNewPerms] = useState(emptyPerms());
   const [error, setError] = useState("");
   const [permUser, setPermUser] = useState(null);
   const [perms, setPerms] = useState([]);
+  const [resetRow, setResetRow] = useState(null);
+  const [resetValue, setResetValue] = useState("");
 
   function load() {
     api.employees().then(setEmployees).catch(() => {});
@@ -39,12 +46,25 @@ export default function AdminPage() {
     e.preventDefault();
     setError("");
     try {
-      await api.addEmployee(form);
+      const created = await api.addEmployee(form);
+      // Xodim yaratilgandan so'ng, tanlangan ruxsatlarni darhol saqlaymiz
+      const entries = Object.entries(newPerms).filter(([, v]) => v.can_view || v.can_edit);
+      for (const [moduleId, v] of entries) {
+        await api.setPermission({ user_id: created.id, module: moduleId, ...v });
+      }
       setForm({ full_name: "", username: "", password: "", role: "sales_manager" });
+      setNewPerms(emptyPerms());
       load();
     } catch (err) {
       setError(err.message);
     }
+  }
+
+  function toggleNewPerm(moduleId, field) {
+    setNewPerms((prev) => ({
+      ...prev,
+      [moduleId]: { ...prev[moduleId], [field]: !prev[moduleId][field] },
+    }));
   }
 
   async function toggleActive(id, active) {
@@ -75,6 +95,13 @@ export default function AdminPage() {
     setPerms(rows);
   }
 
+  async function submitReset(id) {
+    if (!resetValue || resetValue.length < 4) return;
+    await api.resetPassword(id, resetValue);
+    setResetRow(null);
+    setResetValue("");
+  }
+
   return (
     <div className="space-y-10">
       <div>
@@ -83,51 +110,90 @@ export default function AdminPage() {
       </div>
 
       <section className="space-y-4">
-        <h2 className="font-display font-medium text-lg">{t("employees")}</h2>
-        <form onSubmit={addEmployee} className="bg-panel border border-border rounded-xl p-5 grid md:grid-cols-5 gap-3 items-end">
-          <div className="md:col-span-1">
-            <label className="text-xs text-textMuted">To'liq ism</label>
-            <input
-              className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm"
-              value={form.full_name}
-              onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
-              required
-            />
+        <h2 className="font-display font-medium text-lg flex items-center gap-2">
+          <UserPlus size={18} className="text-accent" />
+          {t("employees")}
+        </h2>
+        <form onSubmit={addEmployee} className="bg-panel border border-border rounded-xl p-5 space-y-4">
+          <div className="grid md:grid-cols-5 gap-3 items-end">
+            <div className="md:col-span-1">
+              <label className="text-xs text-textMuted">To'liq ism</label>
+              <input
+                className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm focus:border-accent outline-none transition-colors"
+                value={form.full_name}
+                onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
+                required
+              />
+            </div>
+            <div>
+              <label className="text-xs text-textMuted">Login</label>
+              <input
+                className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm focus:border-accent outline-none transition-colors"
+                value={form.username}
+                onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+                required
+              />
+            </div>
+            <div>
+              <label className="text-xs text-textMuted">Parol</label>
+              <input
+                type="password"
+                className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm focus:border-accent outline-none transition-colors"
+                value={form.password}
+                onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+                required
+              />
+            </div>
+            <div>
+              <label className="text-xs text-textMuted">Rol</label>
+              <select
+                className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm focus:border-accent outline-none transition-colors"
+                value={form.role}
+                onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+              >
+                {Object.entries(roleLabels).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button className="bg-accent rounded px-4 py-2 text-sm font-medium hover:bg-accentDim transition-colors">
+              Qo'shish
+            </button>
           </div>
-          <div>
-            <label className="text-xs text-textMuted">Login</label>
-            <input
-              className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm"
-              value={form.username}
-              onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs text-textMuted">Parol</label>
-            <input
-              type="password"
-              className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm"
-              value={form.password}
-              onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-              required
-            />
-          </div>
-          <div>
-            <label className="text-xs text-textMuted">Rol</label>
-            <select
-              className="mt-1 w-full bg-panelAlt border border-border rounded px-2 py-1.5 text-sm"
-              value={form.role}
-              onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-            >
-              {Object.entries(roleLabels).map(([k, v]) => (
-                <option key={k} value={k}>
-                  {v}
-                </option>
+
+          <div className="border-t border-border pt-4">
+            <p className="text-xs text-textMuted uppercase tracking-wide mb-2 flex items-center gap-1.5">
+              <ShieldCheck size={13} />
+              Qaysi bo'limlarga kira olsin? (ixtiyoriy — keyin ham o'zgartirish mumkin)
+            </p>
+            <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3">
+              {modules.map((m) => (
+                <div key={m.id} className="bg-panelAlt border border-border rounded-lg px-3 py-2">
+                  <p className="text-xs font-medium mb-1.5">{m.label}</p>
+                  <div className="flex gap-3 text-xs text-textMuted">
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newPerms[m.id].can_view}
+                        onChange={() => toggleNewPerm(m.id, "can_view")}
+                      />
+                      {t("view")}
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newPerms[m.id].can_edit}
+                        onChange={() => toggleNewPerm(m.id, "can_edit")}
+                      />
+                      {t("edit")}
+                    </label>
+                  </div>
+                </div>
               ))}
-            </select>
+            </div>
           </div>
-          <button className="bg-accent rounded px-4 py-2 text-sm font-medium hover:bg-accentDim">Qo'shish</button>
         </form>
         {error && <p className="text-coral text-sm">{error}</p>}
 
@@ -140,18 +206,19 @@ export default function AdminPage() {
                 <th className="text-left px-4 py-3">Rol</th>
                 <th className="text-left px-4 py-3">Holat</th>
                 <th className="text-left px-4 py-3">Ruxsatlar</th>
+                <th className="text-left px-4 py-3">Parol</th>
               </tr>
             </thead>
             <tbody>
               {employees.map((emp) => (
-                <tr key={emp.id} className="border-t border-border/60">
+                <tr key={emp.id} className="border-t border-border/60 hover:bg-panelAlt/40 transition-colors">
                   <td className="px-4 py-3">{emp.full_name}</td>
                   <td className="px-4 py-3 text-textMuted">{emp.username}</td>
                   <td className="px-4 py-3">{roleLabels[emp.role] || emp.role}</td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => toggleActive(emp.id, emp.active)}
-                      className={`text-xs px-3 py-1 rounded ${emp.active ? "bg-mint/15 text-mint" : "bg-coral/15 text-coral"}`}
+                      className={`text-xs px-3 py-1 rounded transition-colors ${emp.active ? "bg-mint/15 text-mint" : "bg-coral/15 text-coral"}`}
                     >
                       {emp.active ? "Faol" : "Nofaol"}
                     </button>
@@ -160,6 +227,40 @@ export default function AdminPage() {
                     <button onClick={() => openPermissions(emp)} className="text-xs text-accent hover:underline">
                       Sozlash
                     </button>
+                  </td>
+                  <td className="px-4 py-3">
+                    {resetRow === emp.id ? (
+                      <div className="flex gap-1.5">
+                        <input
+                          type="password"
+                          autoFocus
+                          value={resetValue}
+                          onChange={(e) => setResetValue(e.target.value)}
+                          placeholder="yangi parol"
+                          className="bg-panelAlt border border-border rounded px-2 py-1 text-xs w-28"
+                        />
+                        <button onClick={() => submitReset(emp.id)} className="text-xs text-mint hover:underline">
+                          OK
+                        </button>
+                        <button
+                          onClick={() => {
+                            setResetRow(null);
+                            setResetValue("");
+                          }}
+                          className="text-xs text-textMuted hover:underline"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setResetRow(emp.id)}
+                        className="text-xs text-textMuted hover:text-accent flex items-center gap-1"
+                      >
+                        <KeyRound size={12} />
+                        {t("reset_password")}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -170,7 +271,9 @@ export default function AdminPage() {
         {permUser && (
           <div className="bg-panel border border-border rounded-xl p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-display font-medium">{permUser.full_name} — bo'lim ruxsatlari</h3>
+              <h3 className="font-display font-medium">
+                {permUser.full_name} — {t("permissions_title")}
+              </h3>
               <button onClick={() => setPermUser(null)} className="text-xs text-textMuted hover:text-textPrimary">
                 Yopish
               </button>
@@ -179,8 +282,8 @@ export default function AdminPage() {
               <thead className="text-textMuted text-xs uppercase">
                 <tr>
                   <th className="text-left py-2">Bo'lim</th>
-                  <th className="text-left py-2">Ko'rish</th>
-                  <th className="text-left py-2">Tahrirlash</th>
+                  <th className="text-left py-2">{t("view")}</th>
+                  <th className="text-left py-2">{t("edit")}</th>
                 </tr>
               </thead>
               <tbody>
