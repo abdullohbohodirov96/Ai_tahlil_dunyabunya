@@ -362,13 +362,13 @@ export default function AdminPage() {
                 onSave={saveSetting}
               />
               <SettingField
-                label="Telefon ustuni — asosiy (masalan E)"
+                label="Telefon ustuni — 1-raqam (masalan E)"
                 dbKey="google_sheet_col_phone"
                 currentInfo={settings.google_sheet_col_phone}
                 onSave={saveSetting}
               />
               <SettingField
-                label="Telefon ustuni — zaxira (masalan D)"
+                label="Telefon ustuni — 2-raqam (masalan D)"
                 dbKey="google_sheet_col_phone_alt"
                 currentInfo={settings.google_sheet_col_phone_alt}
                 onSave={saveSetting}
@@ -387,8 +387,8 @@ export default function AdminPage() {
               />
             </div>
             <p className="text-xs text-textMuted">
-              Telefon: avval "asosiy" ustunga qaraydi, bo'sh bo'lsa "zaxira"dan oladi. Manba: ikkalasi
-              ham to'ldirilsa, birlashtirib ko'rsatadi (masalan "Toshkent shahri · 150 m² dan ko'p").
+              Ikkala telefon ustuni to'ldirilsa, ikkalasi ham bitta lead ichida ko'rsatiladi
+              (masalan "773781344 / +998991231344"). Manba ham xuddi shunday birlashtiriladi.
               Ustunlarni ko'rsatmasangiz standart tartib ishlaydi: B=Ism, C=Telefon, D=Manba.
             </p>
           </div>
