@@ -100,10 +100,12 @@ export default function MarketingPage() {
               Meta Ads hali ulanmagan — demo ma'lumot ko'rsatilmoqda. Sozlamalar bo'limida token kiriting.
             </p>
           )}
+          <p className="text-xs text-textMuted">Faqat hozir <b>aktiv</b> bo'lgan kampaniyalar ko'rsatilmoqda.</p>
+
           <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 transition-opacity ${loadingTarget ? "opacity-50" : ""}`}>
             <StatCard
               label="Jami xarajat"
-              value={`${(target?.campaigns?.reduce((s, c) => s + Number(c.spend), 0) || 0).toLocaleString("en-US")} so'm`}
+              value={`$${(target?.campaigns?.reduce((s, c) => s + Number(c.spend), 0) || 0).toLocaleString("en-US")}`}
             />
             <StatCard
               label="Jami leadlar"
@@ -116,11 +118,12 @@ export default function MarketingPage() {
               value={(target?.campaigns?.reduce((s, c) => s + Number(c.impressions), 0) || 0).toLocaleString("en-US")}
             />
           </div>
+
           <div className="bg-panel border border-border rounded-xl overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-panelAlt text-textMuted text-xs uppercase">
                 <tr>
-                  <th className="text-left px-4 py-3">Kampaniya</th>
+                  <th className="text-left px-4 py-3">Kampaniya (aktiv)</th>
                   <th className="text-left px-4 py-3">Xarajat</th>
                   <th className="text-left px-4 py-3">Ko'rishlar</th>
                   <th className="text-left px-4 py-3">Klik</th>
@@ -131,7 +134,7 @@ export default function MarketingPage() {
                 {target?.campaigns?.map((c, i) => (
                   <tr key={i} className="border-t border-border/60">
                     <td className="px-4 py-3">{c.name || c.campaign_name}</td>
-                    <td className="px-4 py-3 font-mono mono-num">{Number(c.spend).toLocaleString("en-US")}</td>
+                    <td className="px-4 py-3 font-mono mono-num">${Number(c.spend).toLocaleString("en-US")}</td>
                     <td className="px-4 py-3 font-mono mono-num">{Number(c.impressions).toLocaleString("en-US")}</td>
                     <td className="px-4 py-3 font-mono mono-num">{Number(c.clicks).toLocaleString("en-US")}</td>
                     <td className="px-4 py-3 font-mono mono-num text-mint">{c.leads}</td>
@@ -140,13 +143,33 @@ export default function MarketingPage() {
                 {!target?.campaigns?.length && (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center text-textMuted">
-                      Tanlangan davr uchun kampaniya topilmadi.
+                      Hozir aktiv kampaniya topilmadi.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
+
+          {target?.daily?.length > 0 && (
+            <div className="bg-panel border border-border rounded-xl overflow-hidden">
+              <div className="px-4 py-3 bg-panelAlt text-xs uppercase text-textMuted">Kunlik xarajat</div>
+              <table className="w-full text-sm">
+                <tbody>
+                  {target.daily.map((d) => (
+                    <tr key={d.day} className="border-t border-border/60">
+                      <td className="px-4 py-2 text-textMuted">{d.day}</td>
+                      <td className="px-4 py-2 font-mono mono-num text-right">${Number(d.spend).toLocaleString("en-US")}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="px-4 py-2 text-xs text-textMuted border-t border-border/60">
+                Eslatma: bu — Meta'dan o'qilgan haqiqiy kunlik xarajat. Reklama byudjetini shu yerdan
+                to'g'ridan-to'g'ri o'zgartirish hali qo'shilmagan — buni alohida so'rasangiz qo'shib beraman.
+              </p>
+            </div>
+          )}
         </div>
       )}
 

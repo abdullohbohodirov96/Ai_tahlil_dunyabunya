@@ -24,7 +24,17 @@ export async function PATCH(req, { params }) {
   const { user, error } = requireAuth(req, "sales_manager", "admin");
   if (error) return error;
 
-  const { status, note } = await req.json();
+  const body = await req.json();
+  const {
+    status,
+    note,
+    contact_status,
+    quality,
+    follow_up_date,
+    sold,
+    sale_amount,
+  } = body;
+
   const leadRes = await query("SELECT * FROM leads WHERE id = $1", [params.id]);
   const lead = leadRes.rows[0];
   if (!lead) return NextResponse.json({ error: "Lead topilmadi" }, { status: 404 });
@@ -32,12 +42,34 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: "Bu lead sizga tegishli emas" }, { status: 403 });
   }
 
+  // Agar "sotildi" belgilansa, umumiy status ham "sifatli" bo'ladi (statistikaga tushishi uchun)
+  const resolvedStatus = sold === true ? "sifatli" : status;
+
   await query(
-    "UPDATE leads SET status = COALESCE($1, status), note = COALESCE($2, note), updated_at = now() WHERE id = $3",
-    [status ?? null, note ?? null, params.id]
+    `UPDATE leads SET
+       status = COALESCE($1, status),
+       note = COALESCE($2, note),
+       contact_status = COALESCE($3, contact_status),
+       quality = COALESCE($4, quality),
+       follow_up_date = COALESCE($5, follow_up_date),
+       sold = COALESCE($6, sold),
+       sale_amount = COALESCE($7, sale_amount),
+       updated_at = now()
+     WHERE id = $8`,
+    [
+      resolvedStatus ?? null,
+      note ?? null,
+      contact_status ?? null,
+      quality ?? null,
+      follow_up_date ?? null,
+      sold ?? null,
+      sale_amount ?? null,
+      params.id,
+    ]
   );
 
-  if (status === "sifatli") {
+  const wasAlreadySold = lead.sold;
+  if (sold === true && !wasAlreadySold) {
     await bumpSale(lead.manager_id);
   }
 

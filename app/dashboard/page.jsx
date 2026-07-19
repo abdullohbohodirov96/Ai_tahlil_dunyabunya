@@ -34,7 +34,7 @@ export default function OverviewPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label={t("stat_today_leads")} value={todayLeads} />
         <StatCard label={t("stat_today_sales")} value={todaySales} accentColor="text-mint" />
-        <StatCard label={t("stat_target_spend")} value={`${spend.toLocaleString("en-US")} so'm`} />
+        <StatCard label={t("stat_target_spend")} value={`$${spend.toLocaleString("en-US")}`} />
         <StatCard label={t("stat_smm_audience")} value={followers.toLocaleString("en-US")} />
       </div>
 

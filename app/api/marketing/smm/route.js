@@ -29,8 +29,11 @@ export async function GET(req) {
     const profile = await profileRes.json();
 
     if (profile.error) {
+      const hint = profile.error.message?.includes("expired")
+        ? " Meta Developer Console'dan yangi UZOQ MUDDATLI (long-lived) token oling va qayta kiriting."
+        : "";
       return NextResponse.json(
-        { connected: false, error: `Instagram API xatosi: ${profile.error.message}`, platforms: [] },
+        { connected: false, error: `Instagram API xatosi: ${profile.error.message}${hint}`, platforms: [] },
         { status: 200 }
       );
     }

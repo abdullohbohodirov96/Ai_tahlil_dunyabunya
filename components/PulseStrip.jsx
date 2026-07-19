@@ -28,7 +28,7 @@ export default function PulseStrip() {
         setItems([
           { label: t("stat_today_leads"), value: todayLeads },
           { label: t("stat_today_sales"), value: todaySales },
-          { label: t("stat_target_spend"), value: `${(spend / 1000).toFixed(0)}k` },
+          { label: t("stat_target_spend"), value: `$${(spend / 1000).toFixed(1)}k` },
           { label: t("stat_smm_audience"), value: followers.toLocaleString("en-US") },
           { label: t("telegram_users"), value: tgActive },
         ]);

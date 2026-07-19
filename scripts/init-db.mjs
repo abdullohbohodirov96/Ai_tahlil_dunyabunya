@@ -111,6 +111,13 @@ CREATE TABLE IF NOT EXISTS app_settings (
   value TEXT,
   updated_at TIMESTAMP DEFAULT now()
 );
+
+-- To'liq CRM uchun qo'shimcha maydonlar (mavjud bazalarga ham qo'shiladi)
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS contact_status TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS quality TEXT;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS follow_up_date DATE;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS sold BOOLEAN DEFAULT false;
+ALTER TABLE leads ADD COLUMN IF NOT EXISTS sale_amount NUMERIC;
 `;
 
 async function main() {
