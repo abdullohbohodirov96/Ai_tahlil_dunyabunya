@@ -314,9 +314,7 @@ export default function AdminPage() {
             <div key={c.service} className="bg-panel border border-border rounded-xl p-5 flex items-center justify-between">
               <div>
                 <p className="font-medium">{c.label}</p>
-                <p className="text-xs text-textMuted mt-0.5">
-                  {c.connected ? "Ulangan" : "Ulanmagan — Vercel Environment Variables'da token kiriting"}
-                </p>
+                <p className="text-xs text-textMuted mt-0.5">{c.detail}</p>
               </div>
               <span className={`w-2.5 h-2.5 rounded-full ${c.connected ? "bg-mint" : "bg-coral"}`} />
             </div>
