@@ -23,7 +23,7 @@ export async function POST(req, { params }) {
   try {
     const userRes = await query(
       "INSERT INTO users (full_name, username, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id",
-      [full_name, username, hash, role]
+      [full_name, username.trim(), hash, role]
     );
     const newUserId = userRes.rows[0].id;
 

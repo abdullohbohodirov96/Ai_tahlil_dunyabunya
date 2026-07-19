@@ -22,13 +22,14 @@ export async function POST(req) {
   if (!full_name || !username || !password || !role) {
     return NextResponse.json({ error: "Barcha maydonlar to'ldirilishi shart" }, { status: 400 });
   }
+  const cleanUsername = username.trim();
   const hash = bcrypt.hashSync(password, 10);
   try {
     const res = await query(
       "INSERT INTO users (full_name, username, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id",
-      [full_name, username, hash, role]
+      [full_name, cleanUsername, hash, role]
     );
-    return NextResponse.json({ id: res.rows[0].id, full_name, username, role });
+    return NextResponse.json({ id: res.rows[0].id, full_name, username: cleanUsername, role });
   } catch {
     return NextResponse.json({ error: "Bu username band, boshqasini tanlang" }, { status: 400 });
   }

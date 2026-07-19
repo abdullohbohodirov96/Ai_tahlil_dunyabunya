@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req) {
   const { username, password } = await req.json();
-  const res = await query("SELECT * FROM users WHERE username = $1", [username]);
+  const cleanUsername = (username || "").trim();
+  const res = await query("SELECT * FROM users WHERE LOWER(username) = LOWER($1)", [cleanUsername]);
   const user = res.rows[0];
   if (!user || !user.active) {
     return NextResponse.json({ error: "Foydalanuvchi topilmadi" }, { status: 401 });
