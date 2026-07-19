@@ -27,7 +27,6 @@ const emptyPerms = () =>
 export default function AdminPage() {
   const { t } = useLanguage();
   const [employees, setEmployees] = useState([]);
-  const [connections, setConnections] = useState([]);
   const [form, setForm] = useState({ full_name: "", username: "", password: "", role: "sales_manager" });
   const [newPerms, setNewPerms] = useState(emptyPerms());
   const [error, setError] = useState("");
@@ -39,7 +38,6 @@ export default function AdminPage() {
 
   function load() {
     api.employees().then(setEmployees).catch(() => {});
-    api.connections().then(setConnections).catch(() => {});
     api.getSettings().then(setSettings).catch(() => {});
   }
 
@@ -317,14 +315,6 @@ export default function AdminPage() {
 
       <section className="space-y-4">
         <h2 className="font-display font-medium text-lg">{t("api_connections")}</h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          {connections.map((c) => (
-            <div key={c.service} className="bg-panel border border-border rounded-xl p-5 flex items-center justify-between">
-              <p className="font-medium">{c.label}</p>
-              <span className={`w-2.5 h-2.5 rounded-full ${c.connected ? "bg-mint" : "bg-coral"}`} />
-            </div>
-          ))}
-        </div>
 
         <div className="grid md:grid-cols-2 gap-4">
           <div className="bg-panel border border-border rounded-xl p-5 space-y-4">
