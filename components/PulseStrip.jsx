@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { api } from "../lib/apiClient.js";
+import { useLanguage } from "../lib/i18n.js";
 
 export default function PulseStrip() {
   const [items, setItems] = useState([]);
+  const { t } = useLanguage();
 
   useEffect(() => {
     let mounted = true;
@@ -24,11 +26,11 @@ export default function PulseStrip() {
         const tgActive = Array.isArray(tg) ? tg.length : 0;
 
         setItems([
-          { label: "Bugungi leadlar", value: todayLeads },
-          { label: "Bugungi sotuvlar", value: todaySales },
-          { label: "Target xarajat", value: `${(spend / 1000).toFixed(0)}k` },
-          { label: "SMM auditoriya", value: followers.toLocaleString("en-US") },
-          { label: "Telegram foydalanuvchi", value: tgActive },
+          { label: t("stat_today_leads"), value: todayLeads },
+          { label: t("stat_today_sales"), value: todaySales },
+          { label: t("stat_target_spend"), value: `${(spend / 1000).toFixed(0)}k` },
+          { label: t("stat_smm_audience"), value: followers.toLocaleString("en-US") },
+          { label: t("telegram_users"), value: tgActive },
         ]);
       } catch {
         // jim tur
@@ -40,13 +42,13 @@ export default function PulseStrip() {
       mounted = false;
       clearInterval(id);
     };
-  }, []);
+  }, [t]);
 
   return (
     <div className="border-b border-border bg-panelAlt/60 px-8 py-3 flex items-center gap-8 overflow-x-auto">
       <span className="flex items-center gap-2 text-xs text-textMuted shrink-0">
         <span className="w-1.5 h-1.5 rounded-full bg-mint pulse-dot" />
-        JONLI
+        {t("live")}
       </span>
       {items.map((it) => (
         <div key={it.label} className="flex items-baseline gap-2 shrink-0">

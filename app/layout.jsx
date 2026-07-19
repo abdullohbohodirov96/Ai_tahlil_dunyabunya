@@ -1,4 +1,5 @@
 import "./globals.css";
+import Providers from "./providers.jsx";
 
 export const metadata = {
   title: "Jarvis — Biznes Nazorat Markazi",
@@ -15,7 +16,9 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="bg-base text-textPrimary font-body">{children}</body>
+      <body className="bg-base text-textPrimary font-body">
+        <Providers>{children}</Providers>
+      </body>
     </html>
   );
 }

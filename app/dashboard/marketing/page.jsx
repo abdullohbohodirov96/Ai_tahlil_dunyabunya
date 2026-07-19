@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/apiClient.js";
 import StatCard from "../../../components/StatCard.jsx";
+import { useLanguage } from "../../../lib/i18n.js";
 
 export default function MarketingPage() {
   const [target, setTarget] = useState(null);
   const [smm, setSmm] = useState(null);
   const [tab, setTab] = useState("target");
+  const { t } = useLanguage();
 
   useEffect(() => {
     api.target().then(setTarget).catch(() => {});
@@ -17,8 +19,8 @@ export default function MarketingPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-2xl font-semibold">Marketing bo'limi</h1>
-        <p className="text-textMuted text-sm mt-1">Target va SMM statistikasi</p>
+        <h1 className="font-display text-2xl font-semibold">{t("marketing_title")}</h1>
+        <p className="text-textMuted text-sm mt-1">{t("marketing_subtitle")}</p>
       </div>
 
       <div className="flex gap-2">

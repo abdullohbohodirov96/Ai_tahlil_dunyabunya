@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/apiClient.js";
+import { useLanguage } from "../../../lib/i18n.js";
 
 const roleLabels = {
   admin: "Admin",
@@ -19,6 +20,7 @@ const modules = [
 ];
 
 export default function AdminPage() {
+  const { t } = useLanguage();
   const [employees, setEmployees] = useState([]);
   const [connections, setConnections] = useState([]);
   const [form, setForm] = useState({ full_name: "", username: "", password: "", role: "sales_manager" });
@@ -76,12 +78,12 @@ export default function AdminPage() {
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="font-display text-2xl font-semibold">Sozlamalar</h1>
-        <p className="text-textMuted text-sm mt-1">Xodimlar, ruxsatlar va API ulanishlar</p>
+        <h1 className="font-display text-2xl font-semibold">{t("admin_title")}</h1>
+        <p className="text-textMuted text-sm mt-1">{t("admin_subtitle")}</p>
       </div>
 
       <section className="space-y-4">
-        <h2 className="font-display font-medium text-lg">Xodimlar</h2>
+        <h2 className="font-display font-medium text-lg">{t("employees")}</h2>
         <form onSubmit={addEmployee} className="bg-panel border border-border rounded-xl p-5 grid md:grid-cols-5 gap-3 items-end">
           <div className="md:col-span-1">
             <label className="text-xs text-textMuted">To'liq ism</label>
@@ -203,7 +205,7 @@ export default function AdminPage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="font-display font-medium text-lg">API ulanishlar</h2>
+        <h2 className="font-display font-medium text-lg">{t("api_connections")}</h2>
         <div className="grid md:grid-cols-2 gap-4">
           {connections.map((c) => (
             <div key={c.service} className="bg-panel border border-border rounded-xl p-5 flex items-center justify-between">

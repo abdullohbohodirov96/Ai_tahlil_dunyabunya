@@ -2,14 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Qorong'u tema (standart) */
+:root {
+  --color-base: 15 18 34;
+  --color-panel: 23 27 46;
+  --color-panelAlt: 30 35 56;
+  --color-border: 42 48 80;
+  --color-accent: 242 166 90;
+  --color-accentDim: 185 122 63;
+  --color-mint: 110 231 183;
+  --color-coral: 242 112 122;
+  --color-textPrimary: 232 233 243;
+  --color-textMuted: 139 144 168;
+
+  --bg-gradient-1: #171b2e;
+  --bg-gradient-2: #0f1222;
+}
+
+/* Yorug' tema */
+.light-theme {
+  --color-base: 244 241 234;
+  --color-panel: 255 255 255;
+  --color-panelAlt: 239 235 226;
+  --color-border: 221 214 200;
+  --color-accent: 201 124 61;
+  --color-accentDim: 168 99 43;
+  --color-mint: 22 140 99;
+  --color-coral: 197 58 78;
+  --color-textPrimary: 33 31 26;
+  --color-textMuted: 100 94 84;
+
+  --bg-gradient-1: #efebe2;
+  --bg-gradient-2: #f4f1ea;
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background: radial-gradient(circle at 20% 0%, #171b2e 0%, #0f1222 55%);
+  background: radial-gradient(circle at 20% 0%, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 55%);
   min-height: 100vh;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar {

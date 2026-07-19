@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { api } from "../../../lib/apiClient.js";
+import { useLanguage } from "../../../lib/i18n.js";
 
 export default function TelegramPage() {
   const [users, setUsers] = useState([]);
   const [filter, setFilter] = useState("all");
   const [taskDraft, setTaskDraft] = useState({});
+  const { t } = useLanguage();
 
   async function load() {
     let query = "";
@@ -31,9 +33,9 @@ export default function TelegramPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-2xl font-semibold">Telegram bo'limi</h1>
+        <h1 className="font-display text-2xl font-semibold">{t("telegram_title")}</h1>
         <p className="text-textMuted text-sm mt-1">
-          Botga qo'shilgan foydalanuvchilar, gruppa a'zoligi va vazifalar
+          {t("telegram_subtitle")}
         </p>
       </div>
 

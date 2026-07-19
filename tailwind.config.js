@@ -1,19 +1,20 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./app/**/*.{js,jsx}", "./components/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
-        base: "#0F1222",
-        panel: "#171B2E",
-        panelAlt: "#1E2338",
-        border: "#2A3050",
-        accent: "#F2A65A",
-        accentDim: "#B97A3F",
-        mint: "#6EE7B7",
-        coral: "#F2707A",
-        textPrimary: "#E8E9F3",
-        textMuted: "#8B90A8",
+        base: "rgb(var(--color-base) / <alpha-value>)",
+        panel: "rgb(var(--color-panel) / <alpha-value>)",
+        panelAlt: "rgb(var(--color-panelAlt) / <alpha-value>)",
+        border: "rgb(var(--color-border) / <alpha-value>)",
+        accent: "rgb(var(--color-accent) / <alpha-value>)",
+        accentDim: "rgb(var(--color-accentDim) / <alpha-value>)",
+        mint: "rgb(var(--color-mint) / <alpha-value>)",
+        coral: "rgb(var(--color-coral) / <alpha-value>)",
+        textPrimary: "rgb(var(--color-textPrimary) / <alpha-value>)",
+        textMuted: "rgb(var(--color-textMuted) / <alpha-value>)",
       },
       fontFamily: {
         display: ["Space Grotesk", "sans-serif"],

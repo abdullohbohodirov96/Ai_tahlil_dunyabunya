@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { api } from "../../lib/apiClient.js";
 import StatCard from "../../components/StatCard.jsx";
+import { useLanguage } from "../../lib/i18n.js";
 
 export default function OverviewPage() {
   const [sales, setSales] = useState(null);
   const [target, setTarget] = useState(null);
   const [smm, setSmm] = useState(null);
   const [tg, setTg] = useState([]);
+  const { t } = useLanguage();
 
   useEffect(() => {
     api.salesStats().then(setSales).catch(() => {});
@@ -25,20 +27,20 @@ export default function OverviewPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="font-display text-2xl font-semibold">Umumiy hisobot</h1>
-        <p className="text-textMuted text-sm mt-1">Barcha bo'limlar bo'yicha jamlangan ko'rsatkichlar</p>
+        <h1 className="font-display text-2xl font-semibold">{t("overview_title")}</h1>
+        <p className="text-textMuted text-sm mt-1">{t("overview_subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Bugungi leadlar" value={todayLeads} />
-        <StatCard label="Bugungi sotuvlar" value={todaySales} accentColor="text-mint" />
-        <StatCard label="Target xarajat" value={`${spend.toLocaleString("en-US")} so'm`} />
-        <StatCard label="SMM auditoriya" value={followers.toLocaleString("en-US")} />
+        <StatCard label={t("stat_today_leads")} value={todayLeads} />
+        <StatCard label={t("stat_today_sales")} value={todaySales} accentColor="text-mint" />
+        <StatCard label={t("stat_target_spend")} value={`${spend.toLocaleString("en-US")} so'm`} />
+        <StatCard label={t("stat_smm_audience")} value={followers.toLocaleString("en-US")} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-panel border border-border rounded-xl p-5">
-          <h2 className="font-display font-medium mb-3">Sotuv menejerlari</h2>
+          <h2 className="font-display font-medium mb-3">{t("sales_managers")}</h2>
           <div className="space-y-2">
             {sales?.perManager?.length ? (
               sales.perManager.map((m) => (
@@ -50,16 +52,16 @@ export default function OverviewPage() {
                 </div>
               ))
             ) : (
-              <p className="text-textMuted text-sm">Hozircha menejer yoki lead yo'q.</p>
+              <p className="text-textMuted text-sm">{t("no_managers")}</p>
             )}
           </div>
         </div>
 
         <div className="bg-panel border border-border rounded-xl p-5">
-          <h2 className="font-display font-medium mb-3">Telegram foydalanuvchilari</h2>
+          <h2 className="font-display font-medium mb-3">{t("telegram_users")}</h2>
           <p className="text-3xl font-mono mono-num text-accent">{tg.length}</p>
           <p className="text-textMuted text-sm mt-1">
-            {tg.filter((u) => u.joined_group).length} tadan gruppaga qo'shilgan
+            {tg.filter((u) => u.joined_group).length} {t("joined_group_suffix")}
           </p>
         </div>
       </div>
