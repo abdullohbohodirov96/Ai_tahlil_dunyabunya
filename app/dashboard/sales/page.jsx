@@ -302,8 +302,8 @@ export default function SalesPage() {
       </div>
 
       {view === "table" ? (
-        <div className="bg-panel border border-border rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-panel border border-border rounded-xl overflow-x-auto">
+          <table className="w-full text-sm min-w-[720px]">
             <thead className="bg-panelAlt text-textMuted text-xs uppercase">
               <tr>
                 <th className="text-left px-4 py-3">Ism</th>

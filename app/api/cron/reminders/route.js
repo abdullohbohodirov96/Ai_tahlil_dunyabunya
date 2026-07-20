@@ -1,8 +1,44 @@
 import { NextResponse } from "next/server";
 import { query } from "../../../../lib/db.js";
 import { tgSend, tgSendTaskNotice } from "../../../../lib/telegram.js";
+import { getSetting } from "../../../../lib/settings.js";
+import { fetchInstagram, fetchFacebook } from "../../../../lib/smmService.js";
 
 export const dynamic = "force-dynamic";
+
+async function snapshotSmm(today) {
+  const token = await getSetting("ig_access_token", "IG_ACCESS_TOKEN");
+  if (!token) return;
+
+  const igAccountId = await getSetting("ig_business_account_id", "IG_BUSINESS_ACCOUNT_ID");
+  if (igAccountId) {
+    const ig = await fetchInstagram(token, igAccountId, null, null);
+    if (!ig.error) {
+      await query(
+        `INSERT INTO smm_daily_stats (platform, day, followers, posts, reach, engagement)
+         VALUES ('instagram', $1, $2, $3, $4, $5)
+         ON CONFLICT (platform, day) DO UPDATE SET
+           followers = excluded.followers, posts = excluded.posts,
+           reach = excluded.reach, engagement = excluded.engagement`,
+        [today, ig.followers, ig.posts, ig.reach, ig.engagement]
+      );
+    }
+  }
+
+  const fbPageId = await getSetting("fb_page_id", "FB_PAGE_ID");
+  if (fbPageId) {
+    const fb = await fetchFacebook(token, fbPageId, null, null);
+    if (!fb.error) {
+      await query(
+        `INSERT INTO smm_daily_stats (platform, day, followers, posts, reach, engagement)
+         VALUES ('facebook', $1, $2, $3, $4, $5)
+         ON CONFLICT (platform, day) DO UPDATE SET
+           followers = excluded.followers, reach = excluded.reach, engagement = excluded.engagement`,
+        [today, fb.followers, null, fb.reach, fb.engagement]
+      );
+    }
+  }
+}
 
 // Bu endpoint Vercel Cron tomonidan muntazam (soatiga bir) chaqiriladi — vercel.json'da sozlangan.
 // Qo'lda ham chaqirsa bo'ladi: GET /api/cron/reminders
@@ -10,6 +46,8 @@ export async function GET() {
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
   let sent = 0;
+
+  await snapshotSmm(today);
 
   // 1) Bajarilmagan, deadline'li vazifalar uchun eslatmalar
   const todos = await query(`

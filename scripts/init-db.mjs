@@ -161,6 +161,18 @@ CREATE TABLE IF NOT EXISTS content_plan (
   last_reminder_sent DATE,
   created_by INTEGER REFERENCES users(id)
 );
+
+-- SMM kunlik statistika snapshoti — obunachilar o'sishi grafigini chizish uchun
+CREATE TABLE IF NOT EXISTS smm_daily_stats (
+  id SERIAL PRIMARY KEY,
+  platform TEXT NOT NULL,
+  day DATE NOT NULL,
+  followers INTEGER,
+  posts INTEGER,
+  reach INTEGER,
+  engagement INTEGER,
+  UNIQUE (platform, day)
+);
 `;
 
 async function main() {

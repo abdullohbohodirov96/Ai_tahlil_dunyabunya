@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, TrendingUp } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { api } from "../../../lib/apiClient.js";
 import StatCard from "../../../components/StatCard.jsx";
 import AccessDenied from "../../../components/AccessDenied.jsx";
@@ -19,6 +20,7 @@ const ranges = [
 export default function MarketingPage() {
   const [target, setTarget] = useState(null);
   const [smm, setSmm] = useState(null);
+  const [smmHistory, setSmmHistory] = useState([]);
   const [smmPlatform, setSmmPlatform] = useState("instagram");
   const [range, setRange] = useState("30d");
   const [loadingTarget, setLoadingTarget] = useState(false);
@@ -32,6 +34,7 @@ export default function MarketingPage() {
 
   useEffect(() => {
     if (canSmm) api.smm(smmPlatform, range).then(setSmm).catch(() => {});
+    if (canSmm) api.smmHistory(smmPlatform).then(setSmmHistory).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [smmPlatform, range, canSmm]);
 
@@ -138,8 +141,8 @@ export default function MarketingPage() {
                     <td className="px-4 py-3 font-mono mono-num">${Number(c.spend).toLocaleString("en-US")}</td>
                     <td className="px-4 py-3 font-mono mono-num">{Number(c.impressions).toLocaleString("en-US")}</td>
                     <td className="px-4 py-3 font-mono mono-num">{Number(c.clicks).toLocaleString("en-US")}</td>
-                    <td className="px-4 py-3 font-mono mono-num text-mint">
-                      {c.leads > 0 ? `${c.leads} ${c.resultLabel || ""}` : "—"}
+                    <td className="px-4 py-3 font-mono mono-num text-mint text-xs">
+                      {c.resultsText}
                     </td>
                   </tr>
                 ))}
@@ -229,6 +232,44 @@ export default function MarketingPage() {
               </div>
             ))}
           </div>
+          {smmHistory.length > 1 && (
+            <div className="bg-panel border border-border rounded-xl p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-display font-medium text-sm flex items-center gap-1.5">
+                  <TrendingUp size={15} className="text-mint" />
+                  Obunachilar o'sishi
+                </h3>
+                {(() => {
+                  const first = smmHistory[0]?.followers;
+                  const last = smmHistory[smmHistory.length - 1]?.followers;
+                  const delta = last != null && first != null ? last - first : null;
+                  if (delta == null) return null;
+                  return (
+                    <span className={`text-xs font-mono mono-num ${delta >= 0 ? "text-mint" : "text-coral"}`}>
+                      {delta >= 0 ? "+" : ""}{delta.toLocaleString("en-US")} ({smmHistory.length} kun)
+                    </span>
+                  );
+                })()}
+              </div>
+              <ResponsiveContainer width="100%" height={200}>
+                <LineChart data={smmHistory}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--color-border))" />
+                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: "rgb(var(--color-textMuted))" }} />
+                  <YAxis tick={{ fontSize: 11, fill: "rgb(var(--color-textMuted))" }} domain={["auto", "auto"]} />
+                  <Tooltip
+                    contentStyle={{ background: "rgb(var(--color-panel))", border: "1px solid rgb(var(--color-border))", fontSize: 12 }}
+                  />
+                  <Line type="monotone" dataKey="followers" stroke="rgb(var(--color-mint))" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          {smmHistory.length <= 1 && (
+            <p className="text-xs text-textMuted">
+              O'sish grafigi kunlik snapshot to'planishi bilan (bir necha kundan keyin) ko'rina boshlaydi.
+            </p>
+          )}
+
           {isAdmin && <ContentPlanSection />}
         </div>
       )}

@@ -5,8 +5,10 @@ import { getSetting } from "../../../../lib/settings.js";
 export const dynamic = "force-dynamic";
 
 // Meta'da turli kampaniyalar turli maqsadga (lead, qo'ng'iroq, xabar, xarid...)
-// optimallashtirilgan bo'ladi — shuning uchun faqat "lead" turini emas, barcha
-// tanish konversiya turlarini hisobga olamiz va eng ko'p bo'lganini ko'rsatamiz.
+// optimallashtirilgan bo'ladi. Har birini ALOHIDA ko'rsatamiz — video ko'rish yoki
+// sahifa ko'rish kabi sof "engagement" metrikalarini "natija" sifatida hisoblamaymiz,
+// chunki ular sonlari doim katta bo'lib, haqiqiy konversiyani (lead/call/sms) yashirib
+// yuboradi.
 const ACTION_LABELS = {
   lead: "Lead",
   "onsite_conversion.lead_grouped": "Lead",
@@ -20,20 +22,17 @@ const ACTION_LABELS = {
   complete_registration: "Ro'yxatdan o'tish",
   purchase: "Xarid",
   omni_purchase: "Xarid",
-  video_view: "Video ko'rish",
-  landing_page_view: "Sahifa ko'rish",
 };
 
-function extractResult(actions) {
-  if (!actions || !actions.length) return { count: 0, label: null };
-  let best = { count: 0, label: null };
-  for (const a of actions) {
+// Har bir turdan (Lead, Qo'ng'iroq, Xabar...) alohida-alohida yig'indi hisoblaydi
+function extractResults(actions) {
+  const byLabel = {};
+  for (const a of actions || []) {
     const label = ACTION_LABELS[a.action_type];
     if (!label) continue;
-    const value = Number(a.value || 0);
-    if (value > best.count) best = { count: value, label };
+    byLabel[label] = (byLabel[label] || 0) + Number(a.value || 0);
   }
-  return best;
+  return byLabel;
 }
 
 const PRESETS = {
@@ -113,7 +112,7 @@ export async function GET(req) {
       const spend = Number(row.spend || 0);
       const impressions = Number(row.impressions || 0);
       const clicks = Number(row.clicks || 0);
-      const result = extractResult(row.actions);
+      const results = extractResults(row.actions);
 
       if (!byCampaign[row.campaign_name]) {
         byCampaign[row.campaign_name] = {
@@ -121,21 +120,28 @@ export async function GET(req) {
           spend: 0,
           impressions: 0,
           clicks: 0,
-          leads: 0,
-          resultLabel: null,
+          results: {},
         };
       }
       byCampaign[row.campaign_name].spend += spend;
       byCampaign[row.campaign_name].impressions += impressions;
       byCampaign[row.campaign_name].clicks += clicks;
-      byCampaign[row.campaign_name].leads += result.count;
-      if (result.label) byCampaign[row.campaign_name].resultLabel = result.label;
+      for (const [label, value] of Object.entries(results)) {
+        byCampaign[row.campaign_name].results[label] = (byCampaign[row.campaign_name].results[label] || 0) + value;
+      }
 
       if (!byDay[row.date_start]) byDay[row.date_start] = 0;
       byDay[row.date_start] += spend;
     }
 
-    const campaigns = Object.values(byCampaign);
+    const campaigns = Object.values(byCampaign).map((c) => ({
+      ...c,
+      resultsText: Object.entries(c.results)
+        .map(([label, value]) => `${value} ${label}`)
+        .join(", ") || "—",
+      // Orqaga moslik uchun: eng katta yagona natija (jami hisoblash uchun)
+      leads: Object.values(c.results).reduce((s, v) => s + v, 0),
+    }));
     const daily = Object.entries(byDay)
       .map(([day, spend]) => ({ day, spend }))
       .sort((a, b) => (a.day < b.day ? 1 : -1));
