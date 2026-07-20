@@ -50,21 +50,32 @@ export async function POST(req) {
 
     let idx = 0;
     let added = 0;
+    let updated = 0;
     for (const row of rows) {
-      const managerId = managers[idx % managers.length].id;
-      const res = await query(
-        `INSERT INTO leads (sheet_row_id, full_name, phone, source, manager_id)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (sheet_row_id) DO NOTHING RETURNING id`,
-        [row.rowId, row.fullName, row.phone, row.source, managerId]
-      );
-      if (res.rows.length) {
+      // Avval shu rowId bilan mavjud lead bormi tekshiramiz
+      const existing = await query("SELECT id, manager_id FROM leads WHERE sheet_row_id = $1", [row.rowId]);
+
+      if (existing.rows.length) {
+        // Mavjud lead — CRM maydonlarini (holat, izoh va h.k.) saqlab qolib,
+        // faqat Sheetdan kelgan xom ma'lumotni (ism, telefon, manba) yangilaymiz
+        await query(
+          "UPDATE leads SET full_name = $1, phone = $2, source = $3 WHERE id = $4",
+          [row.fullName, row.phone, row.source, existing.rows[0].id]
+        );
+        updated++;
+      } else {
+        const managerId = managers[idx % managers.length].id;
+        await query(
+          `INSERT INTO leads (sheet_row_id, full_name, phone, source, manager_id)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [row.rowId, row.fullName, row.phone, row.source, managerId]
+        );
         added++;
         await bumpDaily(managerId, "leads_count");
         idx++;
       }
     }
-    return NextResponse.json({ synced: rows.length, added });
+    return NextResponse.json({ synced: rows.length, added, updated });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

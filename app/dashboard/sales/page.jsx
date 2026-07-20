@@ -100,7 +100,7 @@ export default function SalesPage() {
     setMsg("");
     try {
       const res = await api.syncSheet();
-      setMsg(`Sheetdan ${res.synced} qator o'qildi, ${res.added} ta yangi lead qo'shildi.`);
+      setMsg(`Sheetdan ${res.synced} qator o'qildi: ${res.added} ta yangi, ${res.updated} ta yangilandi.`);
       load();
     } catch (e) {
       setMsg(e.message);

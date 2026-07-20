@@ -100,12 +100,17 @@ export async function PATCH(req, { params }) {
   return NextResponse.json({ ok: true });
 }
 
-// Leadni butunlay o'chirish (tarixlari CASCADE bilan birga o'chadi)
+// Leadni butunlay o'chirish (tarixi bilan birga)
 export async function DELETE(req, { params }) {
   const { user, error } = requireAuth(req);
   if (error) return error;
+
   const canEditSales = await hasModuleAccess(user, "sales", "can_edit");
-  if (!canEditSales) return NextResponse.json({ error: "Ruxsat yo'q" }, { status: 403 });
+  if (!canEditSales) {
+    return NextResponse.json({ error: "Lead o'chirish uchun ruxsatingiz yo'q" }, { status: 403 });
+  }
+
+  await query("DELETE FROM lead_activities WHERE lead_id = $1", [params.id]);
   await query("DELETE FROM leads WHERE id = $1", [params.id]);
   return NextResponse.json({ ok: true });
 }
