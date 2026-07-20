@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "../../../../lib/db.js";
-import { tgSend } from "../../../../lib/telegram.js";
+import { tgSend, tgSendTaskNotice } from "../../../../lib/telegram.js";
 
 export const dynamic = "force-dynamic";
 
@@ -23,26 +23,23 @@ export async function GET() {
     const deadline = new Date(todo.deadline);
     const hoursLeft = (deadline - now) / (1000 * 60 * 60);
 
-    // Kunlik eslatma (kuniga bir marta)
+    // Kunlik eslatma (kuniga bir marta) — tugmalar bilan, to'g'ridan-to'g'ri javob berish mumkin
     if (hoursLeft > 0 && todo.last_daily_reminder !== today) {
-      await tgSend(
-        todo.telegram_id,
-        `🔔 Eslatma: "${todo.title}" vazifasi hali bajarilmagan.\n⏰ Muddat: ${deadline.toLocaleString("uz-UZ")}`
-      );
+      await tgSendTaskNotice(todo.telegram_id, todo, "🔔 Eslatma — hali bajarilmagan");
       await query("UPDATE todos SET last_daily_reminder = $1 WHERE id = $2", [today, todo.id]);
       sent++;
     }
 
     // 5 soat qolganda (bir marta)
     if (hoursLeft > 0 && hoursLeft <= 5 && !todo.reminded_5h) {
-      await tgSend(todo.telegram_id, `⚠️ Diqqat: "${todo.title}" vazifasiga 5 soatdan kam vaqt qoldi!`);
+      await tgSendTaskNotice(todo.telegram_id, todo, "⚠️ 5 soatdan kam vaqt qoldi");
       await query("UPDATE todos SET reminded_5h = true WHERE id = $1", [todo.id]);
       sent++;
     }
 
     // 1 soat qolganda (bir marta)
     if (hoursLeft > 0 && hoursLeft <= 1 && !todo.reminded_1h) {
-      await tgSend(todo.telegram_id, `🚨 SHOSHILINCH: "${todo.title}" vazifasiga 1 soatdan kam vaqt qoldi!`);
+      await tgSendTaskNotice(todo.telegram_id, todo, "🚨 SHOSHILINCH — 1 soatdan kam vaqt qoldi");
       await query("UPDATE todos SET reminded_1h = true WHERE id = $1", [todo.id]);
       sent++;
     }
