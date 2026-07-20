@@ -4,6 +4,38 @@ import { getSetting } from "../../../../lib/settings.js";
 
 export const dynamic = "force-dynamic";
 
+// Meta'da turli kampaniyalar turli maqsadga (lead, qo'ng'iroq, xabar, xarid...)
+// optimallashtirilgan bo'ladi — shuning uchun faqat "lead" turini emas, barcha
+// tanish konversiya turlarini hisobga olamiz va eng ko'p bo'lganini ko'rsatamiz.
+const ACTION_LABELS = {
+  lead: "Lead",
+  "onsite_conversion.lead_grouped": "Lead",
+  "onsite_conversion.messaging_conversation_started_7d": "Xabar",
+  "onsite_conversion.messaging_first_reply": "Xabar",
+  "onsite_conversion.messaging_user_depth_2_message_send": "Xabar",
+  contact_total: "Qo'ng'iroq",
+  contact: "Qo'ng'iroq",
+  click_to_call_call_confirm: "Qo'ng'iroq",
+  "onsite_conversion.call_confirm": "Qo'ng'iroq",
+  complete_registration: "Ro'yxatdan o'tish",
+  purchase: "Xarid",
+  omni_purchase: "Xarid",
+  video_view: "Video ko'rish",
+  landing_page_view: "Sahifa ko'rish",
+};
+
+function extractResult(actions) {
+  if (!actions || !actions.length) return { count: 0, label: null };
+  let best = { count: 0, label: null };
+  for (const a of actions) {
+    const label = ACTION_LABELS[a.action_type];
+    if (!label) continue;
+    const value = Number(a.value || 0);
+    if (value > best.count) best = { count: value, label };
+  }
+  return best;
+}
+
 const PRESETS = {
   today: "today",
   "7d": "last_7d",
@@ -78,21 +110,26 @@ export async function GET(req) {
     const byDay = {};
 
     for (const row of rows) {
-      const leadAction = (row.actions || []).find(
-        (a) => a.action_type === "lead" || a.action_type === "onsite_conversion.lead_grouped"
-      );
       const spend = Number(row.spend || 0);
       const impressions = Number(row.impressions || 0);
       const clicks = Number(row.clicks || 0);
-      const leads = Number(leadAction?.value || 0);
+      const result = extractResult(row.actions);
 
       if (!byCampaign[row.campaign_name]) {
-        byCampaign[row.campaign_name] = { name: row.campaign_name, spend: 0, impressions: 0, clicks: 0, leads: 0 };
+        byCampaign[row.campaign_name] = {
+          name: row.campaign_name,
+          spend: 0,
+          impressions: 0,
+          clicks: 0,
+          leads: 0,
+          resultLabel: null,
+        };
       }
       byCampaign[row.campaign_name].spend += spend;
       byCampaign[row.campaign_name].impressions += impressions;
       byCampaign[row.campaign_name].clicks += clicks;
-      byCampaign[row.campaign_name].leads += leads;
+      byCampaign[row.campaign_name].leads += result.count;
+      if (result.label) byCampaign[row.campaign_name].resultLabel = result.label;
 
       if (!byDay[row.date_start]) byDay[row.date_start] = 0;
       byDay[row.date_start] += spend;

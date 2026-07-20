@@ -109,7 +109,7 @@ export default function MarketingPage() {
               value={`$${(target?.campaigns?.reduce((s, c) => s + Number(c.spend), 0) || 0).toLocaleString("en-US")}`}
             />
             <StatCard
-              label="Jami leadlar"
+              label="Jami natijalar (lead/qo'ng'iroq/xabar)"
               value={target?.campaigns?.reduce((s, c) => s + Number(c.leads), 0) || 0}
               accentColor="text-mint"
             />
@@ -128,7 +128,7 @@ export default function MarketingPage() {
                   <th className="text-left px-4 py-3">Xarajat</th>
                   <th className="text-left px-4 py-3">Ko'rishlar</th>
                   <th className="text-left px-4 py-3">Klik</th>
-                  <th className="text-left px-4 py-3">Leadlar</th>
+                  <th className="text-left px-4 py-3">Natija</th>
                 </tr>
               </thead>
               <tbody>
@@ -138,7 +138,9 @@ export default function MarketingPage() {
                     <td className="px-4 py-3 font-mono mono-num">${Number(c.spend).toLocaleString("en-US")}</td>
                     <td className="px-4 py-3 font-mono mono-num">{Number(c.impressions).toLocaleString("en-US")}</td>
                     <td className="px-4 py-3 font-mono mono-num">{Number(c.clicks).toLocaleString("en-US")}</td>
-                    <td className="px-4 py-3 font-mono mono-num text-mint">{c.leads}</td>
+                    <td className="px-4 py-3 font-mono mono-num text-mint">
+                      {c.leads > 0 ? `${c.leads} ${c.resultLabel || ""}` : "—"}
+                    </td>
                   </tr>
                 ))}
                 {!target?.campaigns?.length && (
